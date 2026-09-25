@@ -1,0 +1,34 @@
+# Orquestación de PACE-S con Snakemake. Esqueleto: las reglas se rellenan a
+# medida que cada módulo se implementa. Con 3 iteraciones de bucle, Snakemake
+# deja de ser opcional.
+#
+#   snakemake --configfile workflows/configs/campaign_LiS.yaml -n
+
+configfile: "workflows/configs/campaign_LiS.yaml"
+
+CAMPAIGN = config["campaign_id"]
+OUT = f"data/campaigns/{CAMPAIGN}"
+
+
+rule all:
+    input:
+        f"{OUT}/tier0_table.parquet",
+
+
+rule generate:
+    input:
+        seeds="data/reference/seeds.csv",
+    output:
+        f"{OUT}/candidates_stage1.parquet",
+    shell:
+        "python -m pace_s.generate.run --config {workflow.configfiles[0]} --out {output}"
+
+
+rule tier0:
+    input:
+        f"{OUT}/candidates_stage1.parquet",
+    output:
+        f"{OUT}/tier0_table.parquet",
+    shell:
+        "python -m pace_s.descriptors.run_tier0 --config {workflow.configfiles[0]} "
+        "--candidates {input} --out {output}"

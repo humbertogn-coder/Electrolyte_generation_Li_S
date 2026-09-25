@@ -1,0 +1,6 @@
+name,smiles,group,donor_number_kcal_mol,dn_source,expected_tier0_note
+DME,COCCOC,coordinating,,"rellenar desde Commun. Mater. 2025 / Joule 2021","li_binding_eV mas negativo que cualquier diluyente"
+DOL,C1COCO1,coordinating,,"rellenar","li_binding_eV mas negativo que cualquier diluyente"
+THP,C1CCOCC1,coordinating,,"rellenar","li_binding_eV mas negativo que cualquier diluyente"
+F5DEE,FC(F)COCCOCC(F)(F)F,weakly_solvating,,"rellenar","entre coordinantes y diluyentes"
+TTE,FC(F)C(F)(F)OCC(F)(F)C(F)F,diluent,,"rellenar","li_binding_eV menos negativo que cualquier coordinante; esp_max alto"

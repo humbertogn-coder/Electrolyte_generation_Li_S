@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pace-s"
+version = "0.0.1"
+description = "Pipeline de generacion y cribado activo de electrolitos para baterias de Li metal con azufre (Li-S / Li-SPAN)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Carlos Guerrero", email = "humbertogn@tamu.edu" }]
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyyaml",
+  "jsonschema",
+]
+
+[project.optional-dependencies]
+chem = ["rdkit", "ase", "selfies", "morfeus-ml"]
+ml = ["scikit-learn", "lightgbm", "torch", "botorch", "gpytorch", "shap"]
+dev = ["pytest", "rdkit"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"pace_s" = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

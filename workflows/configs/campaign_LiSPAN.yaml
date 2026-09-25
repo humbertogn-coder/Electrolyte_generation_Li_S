@@ -1,0 +1,24 @@
+# Campaña PACE-S para Li-SPAN (transferencia). Solo cambian los pesos de los
+# objetivos respecto a campaign_LiS.yaml; el resto se hereda.
+campaign_id: TR-01
+system: Li-SPAN
+inherit: campaign_LiS.yaml
+
+objectives:
+  O1_weak_solvation:
+    weight: 1.0
+  O2_polysulfide_retention:
+    weight: 0.3          # el S está enlazado covalentemente; el shuttle importa menos
+  O3_reductive_passivation:
+    weight: 2.0          # dominante en Li-SPAN
+  O4_transport:
+    weight: 0.6
+  O5_synthesizability:
+    role: constraint
+
+calibration:
+  gate:
+    # No existe tabla de solubilidad equivalente para SPAN. La transferencia se
+    # valida reordenando los finalistas de Li-S y documentando qué cambia.
+    dataset: null
+    metric: rank_change_report

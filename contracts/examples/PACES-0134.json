@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "electrolyte_id": "PACES-0134",
+  "system": "Li-S",
+  "composition": {
+    "solvent": "COCCOC",
+    "diluent": "FC(F)C(F)(F)OCC(F)(F)C(F)F",
+    "salt": "LiFSI",
+    "molar_ratio": [1.0, 1.2, 3.0],
+    "temperature_K": 298.15
+  },
+  "solvation": {
+    "CN_Li_O": 2.4,
+    "CN_Li_Oanion": 1.9,
+    "frac_SSIP": 0.17,
+    "frac_CIP": 0.31,
+    "frac_AGG": 0.52,
+    "D_Li": 1.8e-10,
+    "sigma_mS_cm": 3.2,
+    "viscosity_mPa_s": 4.1,
+    "density_g_cm3": 1.42,
+    "residence_time_ps": 85.0
+  },
+  "polysulfide": {
+    "solubility_Li2S8_mM": 42.0,
+    "binding_energy_Li2S8_eV": -0.38,
+    "method": "tier1_pmf"
+  },
+  "interphase": {
+    "species": [
+      { "formula": "LiF", "rel_abundance": 0.41, "formation_energy_eV": -3.2 },
+      { "formula": "Li2S", "rel_abundance": 0.18, "formation_energy_eV": -2.1 },
+      { "formula": "Li2O", "rel_abundance": 0.04 },
+      { "formula": "ROLi", "rel_abundance": 0.37 }
+    ],
+    "inorganic_fraction": 0.63
+  },
+  "kinetics": {
+    "desolvation_barrier_eV": 0.42,
+    "reduction_onset_V": 1.1,
+    "surface_diffusion_barrier_eV": 0.18
+  },
+  "provenance": {
+    "tier": 3,
+    "level_of_theory": "wB97X-D/def2-TZVPD",
+    "mlip": "MACE-OMol-0",
+    "campaign_id": "AL-03",
+    "commit": "a3f9c21",
+    "generated_at": "2026-11-10T14:00:00Z",
+    "notes": "Valores ilustrativos. sigma por Green-Kubo, no Nernst-Einstein."
+  }
+}

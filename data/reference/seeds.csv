@@ -1,0 +1,15 @@
+name,role,smiles,full_name,notes
+DME,seed_solvent,COCCOC,"1,2-dimethoxyethane",coordinante de referencia (DOL/DME)
+DOL,seed_solvent,C1COCO1,"1,3-dioxolane",coordinante
+DMM,seed_solvent,COCOC,dimethoxymethane,coordinante debil
+THP,seed_solvent,C1CCOCC1,tetrahydropyran,coordinante debil
+diglyme,seed_solvent,COCCOCCOC,"bis(2-methoxyethyl) ether",coordinante fuerte
+triglyme,seed_solvent,COCCOCCOCCOC,"triethylene glycol dimethyl ether",coordinante fuerte
+F5DEE,seed_solvent,FC(F)COCCOCC(F)(F)F,"1-(2,2-difluoroethoxy)-2-(2,2,2-trifluoroethoxy)ethane","Nat. Energy 2022; CONFIRMAR SMILES contra el paper"
+FDMB,seed_solvent,COCC(F)(F)C(F)(F)COC,"1,4-dimethoxy-2,2,3,3-tetrafluorobutane",fluoroeter de solvatacion debil
+EMP,seed_solvent,,"PENDIENTE: nombre completo y SMILES segun Amanchukwu, MSDE 2026","eter NO fluorado con ~99 % CE; rellenar antes de H1"
+TTE,seed_diluent,FC(F)C(F)(F)OCC(F)(F)C(F)F,"1,1,2,2-tetrafluoroethyl 2,2,3,3-tetrafluoropropyl ether",diluyente LHCE de referencia
+OFE,seed_diluent,FC(F)C(F)(F)OCC(F)(F)C(F)(F)C(F)(F)C(F)F,"1H,1H,5H-octafluoropentyl 1,1,2,2-tetrafluoroethyl ether","CONFIRMAR SMILES; cadena (CF2)3 en el limite PFAS"
+TFTFE,seed_diluent,FC(F)C(F)(F)OCC(F)(F)F,"1,1,2,2-tetrafluoroethyl 2,2,2-trifluoroethyl ether",diluyente
+BTFE,seed_diluent,FC(F)(F)COCC(F)(F)F,"bis(2,2,2-trifluoroethyl) ether",diluyente (Li-SPAN LHCE)
+TFEO,seed_diluent,FC(F)(F)COC(OCC(F)(F)F)OCC(F)(F)F,"tris(2,2,2-trifluoroethyl) orthoformate",diluyente

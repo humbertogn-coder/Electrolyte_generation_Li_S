@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# entornos
+.venv/
+.pixi/
+.snakemake/
+
+# datos pesados: Git guarda el índice (data/manifests), Grace guarda los bytes
+data/raw/
+data/campaigns/
+*.traj
+*.lammpstrj
+*.dcd
+*.xtc
+*.h5
+*.npz
+*.gbw
+*.wfn
+CHG
+CHGCAR
+WAVECAR
+vasprun.xml
+OUTCAR
+*.pt
+*.pth
+*.model
+*.ckpt
+
+# salidas de xtb / crest
+xtbrestart
+xtbtopo.mol
+charges
+wbo
+crest_conformers.xyz
+crest_rotamers.xyz
+crest.energies
+
+# SLURM
+slurm-*.out
+*.err
+
+# editores y SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

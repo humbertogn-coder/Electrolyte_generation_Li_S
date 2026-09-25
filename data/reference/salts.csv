@@ -1,0 +1,3 @@
+name,smiles,anion_smiles,notes
+LiFSI,[Li+].O=S(=O)(F)[N-]S(=O)(=O)F,O=S(=O)(F)[N-]S(=O)(=O)F,fija en las 8 semanas
+LiTFSI,[Li+].O=S(=O)(C(F)(F)F)[N-]S(=O)(=O)C(F)(F)F,O=S(=O)(C(F)(F)F)[N-]S(=O)(=O)C(F)(F)F,fija en las 8 semanas

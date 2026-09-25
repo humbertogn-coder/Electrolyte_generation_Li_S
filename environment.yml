@@ -1,0 +1,42 @@
+# Entorno principal de PACE-S: generación, tier 0, modelos sustitutos, active learning, análisis.
+# Los stacks de MLIP y LAMMPS van en environment-mlip.yml (entorno separado).
+name: pace-s
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  # química
+  - rdkit
+  - xtb
+  - crest
+  - ase
+  - openbabel
+  # datos y ML
+  - numpy
+  - scipy
+  - pandas
+  - pyarrow
+  - scikit-learn
+  - lightgbm
+  - pytorch
+  - botorch
+  - gpytorch
+  - shap
+  # trayectorias (análisis; la MD corre en el entorno MLIP)
+  - mdanalysis
+  # infraestructura
+  - jsonschema
+  - pyyaml
+  - snakemake-minimal
+  - pytest
+  - jupyterlab
+  - matplotlib
+  - pip:
+      - morfeus-ml
+      - selfies
+      - solvation-analysis
+      - chemprop
+      # filtros de síntesis; RAScore no está en PyPI, instalar desde
+      # https://github.com/reymond-group/RAscore si se usa
+      - -e .

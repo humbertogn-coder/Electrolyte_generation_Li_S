@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/balbuena-group/pace-s/contracts/kmc_interface.schema.json",
+  "title": "PACE-S -> kMC 3D interface",
+  "description": "Un electrolito evaluado por PACE-S, con todo lo que el kMC 3D de morfologia necesita. Congelado en semana 0. Cambiar este esquema exige subir schema_version y actualizar src/pace_s/export/kmc3d_adapter.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "electrolyte_id",
+    "system",
+    "composition",
+    "solvation",
+    "polysulfide",
+    "interphase",
+    "kinetics",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "electrolyte_id": {
+      "type": "string",
+      "pattern": "^PACES-[0-9]{4,}$",
+      "description": "Identificador unico y estable del electrolito (no de la molecula)."
+    },
+    "system": { "type": "string", "enum": ["Li-S", "Li-SPAN"] },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["solvent", "diluent", "salt", "molar_ratio"],
+      "properties": {
+        "solvent": { "type": "string", "description": "SMILES canonico del solvente coordinante." },
+        "diluent": {
+          "type": ["string", "null"],
+          "description": "SMILES canonico del diluyente; null si no hay diluyente."
+        },
+        "salt": { "type": "string", "enum": ["LiFSI", "LiTFSI"] },
+        "molar_ratio": {
+          "type": "array",
+          "description": "[sal, solvente, diluyente], en moles relativos.",
+          "items": { "type": "number", "minimum": 0 },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "temperature_K": { "type": "number", "default": 298.15 }
+      }
+    },
+    "solvation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["CN_Li_O", "frac_SSIP", "frac_CIP", "frac_AGG", "D_Li", "sigma_mS_cm"],
+      "properties": {
+        "CN_Li_O": { "type": "number", "minimum": 0, "description": "Numero de coordinacion Li-O (solvente) de la primera capa." },
+        "CN_Li_Oanion": { "type": "number", "minimum": 0, "description": "Numero de coordinacion Li-O del anion." },
+        "frac_SSIP": { "type": "number", "minimum": 0, "maximum": 1 },
+        "frac_CIP": { "type": "number", "minimum": 0, "maximum": 1 },
+        "frac_AGG": { "type": "number", "minimum": 0, "maximum": 1 },
+        "D_Li": { "type": "number", "minimum": 0, "description": "Coeficiente de difusion de Li+ en m^2/s." },
+        "sigma_mS_cm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Conductividad ionica en mS/cm. LIMITACION: si se estima por Nernst-Einstein, sobreestima; indicar el metodo en provenance.notes."
+        },
+        "viscosity_mPa_s": { "type": "number", "minimum": 0 },
+        "density_g_cm3": { "type": "number", "minimum": 0 },
+        "residence_time_ps": { "type": "number", "minimum": 0, "description": "Tiempo de residencia solvente-Li+." }
+      }
+    },
+    "polysulfide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["solubility_Li2S8_mM", "method"],
+      "properties": {
+        "solubility_Li2S8_mM": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Solubilidad de Li2S8 en mM de atomos de S, comparable con la Tabla 1 de Joule 2021."
+        },
+        "binding_energy_Li2S8_eV": { "type": "number", "description": "Energia de interaccion solvente-Li2S8 (tier 0/2)." },
+        "method": {
+          "type": "string",
+          "enum": ["tier0_binding", "tier1_pmf", "tier2_dft_cosmo", "experimental"],
+          "description": "Como se obtuvo la solubilidad."
+        }
+      }
+    },
+    "interphase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["species", "inorganic_fraction"],
+      "properties": {
+        "species": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["formula", "rel_abundance"],
+            "properties": {
+              "formula": { "type": "string" },
+              "rel_abundance": { "type": "number", "minimum": 0, "maximum": 1 },
+              "formation_energy_eV": { "type": "number" }
+            }
+          }
+        },
+        "inorganic_fraction": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "kinetics": {
+      "type": "object",
+      "description": "Los tres campos obligatorios son la entrada del kMC 3D.",
+      "additionalProperties": false,
+      "required": ["desolvation_barrier_eV", "reduction_onset_V", "surface_diffusion_barrier_eV"],
+      "properties": {
+        "desolvation_barrier_eV": { "type": "number", "minimum": 0 },
+        "reduction_onset_V": { "type": "number", "description": "Potencial de inicio de reduccion vs Li/Li+." },
+        "surface_diffusion_barrier_eV": { "type": "number", "minimum": 0 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "level_of_theory", "campaign_id", "commit"],
+      "properties": {
+        "tier": { "type": "integer", "minimum": 1, "maximum": 3, "description": "Tier mas alto que respalda los numeros de este registro. Tier 0 nunca se exporta." },
+        "level_of_theory": { "type": "string", "description": "p. ej. wB97X-D/def2-TZVPD, MACE-OMol-0, PBE-D3." },
+        "mlip": { "type": "string", "description": "Potencial usado en tier 1, si aplica." },
+        "campaign_id": { "type": "string", "pattern": "^[A-Z]+-[0-9]{2,}$" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

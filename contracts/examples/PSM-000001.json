@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "PSM-000001",
+  "smiles": "COCCOC",
+  "canonical_smiles": "COCCOC",
+  "inchikey": "XTHFKEDIFFGKHM-UHFFFAOYSA-N",
+  "role": "seed_solvent",
+  "generation": {
+    "stage": 0,
+    "parent_id": null,
+    "operator": "seed",
+    "distance_to_seeds": 0.0
+  },
+  "filters": {
+    "passes_hard": true,
+    "hard_fail_reason": null,
+    "sascore": 1.6,
+    "rascore": 0.99,
+    "in_pubchem": true,
+    "in_emolecules": true
+  },
+  "status": "generated",
+  "campaign_id": "GEN-01",
+  "commit": "a3f9c21"
+}
