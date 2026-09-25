@@ -36,6 +36,10 @@ generation:
     - ring_close
     - bridge_insert
     - branch
+  n_rounds: 3                                # rondas de mutación en anchura desde las semillas
+  # ~25 hijos nuevos por padre y ronda (medido: 340/13 en ronda 1, 8233/305 en ronda 2).
+  # Si una ronda excedería target_size.max, la frontera se submuestrea al azar con `seed`.
+  expected_children_per_parent: 25
   stage2: { method: safe, enabled: false }   # se activa sobre los mejores de la etapa 1
   target_size: { min: 20000, max: 60000 }
 

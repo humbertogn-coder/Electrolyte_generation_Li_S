@@ -24,6 +24,7 @@ def load_schema(name: str) -> dict[str, Any]:
         return json.load(fh)
 
 
+@lru_cache(maxsize=None)
 def validator(name: str) -> Draft202012Validator:
     schema = load_schema(name)
     Draft202012Validator.check_schema(schema)
