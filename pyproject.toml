@@ -13,7 +13,7 @@ dependencies = [
   "numpy",
   "pandas",
   "pyyaml",
-  "jsonschema",
+  "jsonschema>=4.18",
 ]
 
 [project.optional-dependencies]
