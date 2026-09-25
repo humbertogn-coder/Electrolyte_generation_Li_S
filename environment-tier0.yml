@@ -23,6 +23,7 @@ dependencies:
   - pyarrow
   - pyyaml
   - jsonschema>=4.18
+  - snakemake-minimal   # orquestación; no tiene build para Windows, por eso vive aquí
   - pip:
       - morfeus-ml
       - -e .

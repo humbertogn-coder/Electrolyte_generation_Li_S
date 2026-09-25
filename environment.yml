@@ -30,7 +30,6 @@ dependencies:
   # infraestructura
   - jsonschema>=4.18
   - pyyaml
-  - snakemake-minimal
   - pytest
   - jupyterlab
   - matplotlib
