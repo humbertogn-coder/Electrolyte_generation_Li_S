@@ -44,13 +44,21 @@ notebooks/
 ## Instalación
 
 ```bash
-conda env create -f environment.yml          # generación, tier 0, sustitutos, AL
+conda env create -f environment.yml          # laptop: generación, sustitutos, AL, tests
 conda activate pace-s
 pip install -e .
 pytest
 ```
 
-Los stacks de MLIP (MACE, fairchem/UMA, DeePMD) y LAMMPS van en un entorno separado (`environment-mlip.yml`) porque sus dependencias de PyTorch/CUDA chocan con el resto. En Grace, LAMMPS con plugin de MACE o DeePMD se compila aparte; pregunta por la ruta que ya resolvió el grupo antes de compilar desde cero.
+Tres entornos, porque no todo tiene build para Windows ni convive en un solo resolvedor:
+
+| Archivo | Dónde | Para qué |
+|---|---|---|
+| `environment.yml` | laptop y Grace | generación, filtros, sustitutos, AL, análisis, tests |
+| `environment-tier0.yml` | Grace (Linux) | xtb, CREST, morfeus: descriptores de tier 0 |
+| `environment-mlip.yml` | Grace (GPU) | MACE / fairchem (UMA), LAMMPS con plugin: tier 1 y benchmark H2 |
+
+En Grace, LAMMPS con plugin de MACE o DeePMD se compila aparte; pregunta por la ruta que ya resolvió el grupo antes de compilar desde cero.
 
 ## Reglas de trabajo
 
