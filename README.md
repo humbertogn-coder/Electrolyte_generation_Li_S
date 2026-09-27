@@ -50,6 +50,14 @@ pip install -e .
 pytest
 ```
 
+Para correr tier 0 en la laptop (pruebas pequeñas) basta añadir xtb al entorno principal, que sí tiene build para Windows:
+
+```bash
+conda install -c conda-forge xtb
+python -m pace_s.descriptors.run_tier0 --config workflows/configs/campaign_LiS.yaml \
+    --smiles COCCOC C1COCO1 --workdir data/campaigns/test/tier0 --out data/campaigns/test/tier0_test.csv
+```
+
 Tres entornos, porque no todo tiene build para Windows ni convive en un solo resolvedor:
 
 | Archivo | Dónde | Para qué |

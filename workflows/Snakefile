@@ -12,7 +12,7 @@ OUT = f"data/campaigns/{CAMPAIGN}"
 
 rule all:
     input:
-        f"{OUT}/tier0_table.parquet",
+        f"{OUT}/tier0/tier0_all.csv",
 
 
 rule generate:
@@ -28,7 +28,9 @@ rule tier0:
     input:
         f"{OUT}/candidates_stage1.parquet",
     output:
-        f"{OUT}/tier0_table.parquet",
+        f"{OUT}/tier0/tier0_all.csv",
     shell:
+        # en Grace este paso se lanza como job array (workflows/slurm/tier0_xtb_array.sbatch);
+        # aquí queda la versión secuencial para pruebas pequeñas
         "python -m pace_s.descriptors.run_tier0 --config {workflow.configfiles[0]} "
-        "--candidates {input} --out {output}"
+        "--candidates {input} --workdir $SCRATCH/pace-s/{CAMPAIGN}/tier0 --out {output}"

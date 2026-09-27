@@ -7,6 +7,8 @@ Datos de referencia y calibración. Todo lo que está aquí es pequeño, version
 | `seeds.csv` | Semillas coordinantes y diluyentes (M0). | EMP sin SMILES; F5DEE y OFE marcados para confirmar contra PubChem |
 | `salts.csv` | LiFSI y LiTFSI. | listo |
 | `tier0_reference_molecules.csv` | Cinco moléculas con orden esperado de tier 0 (criterio de éxito de H1). | falta rellenar DN numérico con fuente |
+| `li2s8_gfn2_alpb_ether.xyz` | Geometría de referencia de Li₂S₈ (GFN2-xTB/ALPB) para la afinidad de tier 0. No es mínimo global verificado. | listo |
+| `tier0_reference_results_gfn2.csv` | Resultados de tier 0 para las 6 moléculas de referencia (xtb 6.7.1, Linux). Regresión de `tests/test_tier0.py`. | listo |
 | `joule2021_table1_solubility.csv` | Tabla 1 de *Joule* 2021: solubilidad de S₈ y Li₂Sₓ en mM para 40+ sistemas. **Conjunto de la compuerta H3.** | **por digitalizar (semana 0)** |
 | `combat_seed.csv` | Subconjunto de ComBat / MISPR (Atwi y Rajput) para arranque en frío de los sustitutos. | por descargar |
 | `scirep2023_69solvents.csv` | 69 solventes con ΔmixG de COSMO-RS (*Sci. Rep.* 2023). | solicitar a los autores |

@@ -16,29 +16,66 @@
     "campaign_id"
   ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0.0" },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
     "candidate_id": {
       "type": "string",
       "pattern": "^PSM-[0-9]{6}$",
       "description": "PACE-S Molecule. Distinto de electrolyte_id (PACES-xxxx), que identifica una formulacion."
     },
-    "smiles": { "type": "string", "description": "SMILES tal como lo produjo el generador." },
-    "canonical_smiles": { "type": "string", "description": "SMILES canonico de RDKit; clave de deduplicacion." },
-    "inchikey": { "type": "string", "pattern": "^[A-Z]{14}-[A-Z]{10}-[A-Z]$" },
-    "role": { "type": "string", "enum": ["solvent", "diluent", "seed_solvent", "seed_diluent"] },
+    "smiles": {
+      "type": "string",
+      "description": "SMILES tal como lo produjo el generador."
+    },
+    "canonical_smiles": {
+      "type": "string",
+      "description": "SMILES canonico de RDKit; clave de deduplicacion."
+    },
+    "inchikey": {
+      "type": "string",
+      "pattern": "^[A-Z]{14}-[A-Z]{10}-[A-Z]$"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "solvent",
+        "diluent",
+        "seed_solvent",
+        "seed_diluent"
+      ]
+    },
     "generation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stage", "parent_id", "operator"],
+      "required": [
+        "stage",
+        "parent_id",
+        "operator"
+      ],
       "properties": {
         "stage": {
           "type": "integer",
-          "enum": [0, 1, 2],
+          "enum": [
+            0,
+            1,
+            2
+          ],
           "description": "0 = semilla; 1 = variacion enumerativa de conocidos; 2 = mutacion abierta (SAFE/REINVENT4)."
         },
-        "parent_id": { "type": ["string", "null"], "description": "candidate_id del padre; null para semillas." },
+        "parent_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "candidate_id del padre; null para semillas."
+        },
         "operator": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "enum": [
             null,
             "seed",
@@ -66,14 +103,43 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "passes_hard": { "type": "boolean" },
-        "hard_fail_reason": { "type": ["string", "null"] },
-        "sascore": { "type": "number", "minimum": 1, "maximum": 10 },
-        "rascore": { "type": "number", "minimum": 0, "maximum": 1 },
-        "in_pubchem": { "type": ["boolean", "null"] },
-        "in_emolecules": { "type": ["boolean", "null"] },
-        "mp_est_C": { "type": "number" },
-        "bp_est_C": { "type": "number" }
+        "passes_hard": {
+          "type": "boolean"
+        },
+        "hard_fail_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sascore": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "rascore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "in_pubchem": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "in_emolecules": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "mp_est_C": {
+          "type": "number"
+        },
+        "bp_est_C": {
+          "type": "number"
+        }
       }
     },
     "tier0": {
@@ -81,23 +147,81 @@
       "description": "Descriptores baratos (< 5 min CPU). SOLO para ordenar y filtrar; nunca entran al paper.",
       "additionalProperties": false,
       "properties": {
-        "method": { "type": "string", "description": "p. ej. GFN2-xTB/ALPB, g-xTB." },
-        "homo_eV": { "type": "number" },
-        "lumo_eV": { "type": "number" },
-        "gap_eV": { "type": "number" },
-        "esp_max_kcal_mol": { "type": "number" },
-        "esp_min_kcal_mol": { "type": "number" },
-        "li_binding_eV": { "type": "number", "description": "Energia de union Li+-solvente (proxy de DN)." },
-        "li2s8_binding_eV": { "type": "number", "description": "Descriptor central: energia de interaccion solvente-Li2S8, calibrado contra la Tabla 1 de Joule 2021." },
-        "solv_energy_kcal_mol": { "type": "number" },
-        "dipole_D": { "type": "number" },
-        "volume_A3": { "type": "number" },
-        "tpsa_A2": { "type": "number" },
-        "logp": { "type": "number" },
-        "mol_weight": { "type": "number" },
-        "frac_fluorination": { "type": "number", "minimum": 0, "maximum": 1, "description": "F / (F + H)." },
-        "ratio_C_O": { "type": "number" },
-        "n_conformers": { "type": "integer", "minimum": 0 }
+        "method": {
+          "type": "string",
+          "description": "p. ej. GFN2-xTB/ALPB, g-xTB."
+        },
+        "homo_eV": {
+          "type": "number"
+        },
+        "lumo_eV": {
+          "type": "number"
+        },
+        "gap_eV": {
+          "type": "number"
+        },
+        "esp_max_kcal_mol": {
+          "type": "number"
+        },
+        "esp_min_kcal_mol": {
+          "type": "number"
+        },
+        "li_binding_eV": {
+          "type": "number",
+          "description": "Energia de union Li+-solvente (proxy de DN)."
+        },
+        "li2s8_binding_eV": {
+          "type": "number",
+          "description": "Descriptor central: energia de interaccion solvente-Li2S8, calibrado contra la Tabla 1 de Joule 2021."
+        },
+        "solv_energy_kcal_mol": {
+          "type": "number"
+        },
+        "dipole_D": {
+          "type": "number"
+        },
+        "volume_A3": {
+          "type": "number"
+        },
+        "tpsa_A2": {
+          "type": "number"
+        },
+        "logp": {
+          "type": "number"
+        },
+        "mol_weight": {
+          "type": "number"
+        },
+        "frac_fluorination": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "F / (F + H)."
+        },
+        "ratio_C_O": {
+          "type": "number"
+        },
+        "n_conformers": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_li_sites": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sitios O/N/S probados para Li+ y Li2S8."
+        },
+        "wall_s": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Tiempo de pared del calculo, en segundos."
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Mensaje si el calculo fallo; null si fue bien."
+        }
       }
     },
     "tier1": {
@@ -105,24 +229,54 @@
       "description": "Resumen de MLIP-MD para la formulacion de referencia de esta molecula; el detalle vive en el registro PACES-xxxx.",
       "additionalProperties": false,
       "properties": {
-        "electrolyte_id": { "type": "string", "pattern": "^PACES-[0-9]{4,}$" },
-        "mlip": { "type": "string" },
-        "frac_CIP_AGG": { "type": "number", "minimum": 0, "maximum": 1 },
-        "solubility_Li2S8_mM": { "type": "number", "minimum": 0 },
-        "sigma_mS_cm": { "type": "number", "minimum": 0 },
-        "viscosity_mPa_s": { "type": "number", "minimum": 0 }
+        "electrolyte_id": {
+          "type": "string",
+          "pattern": "^PACES-[0-9]{4,}$"
+        },
+        "mlip": {
+          "type": "string"
+        },
+        "frac_CIP_AGG": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "solubility_Li2S8_mM": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sigma_mS_cm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "viscosity_mPa_s": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
     "tier2": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "level_of_theory": { "type": "string" },
-        "reduction_potential_V": { "type": "number" },
-        "oxidation_potential_V": { "type": "number" },
-        "li_binding_eV": { "type": "number" },
-        "li2s8_binding_eV": { "type": "number" },
-        "desolvation_barrier_eV": { "type": "number" }
+        "level_of_theory": {
+          "type": "string"
+        },
+        "reduction_potential_V": {
+          "type": "number"
+        },
+        "oxidation_potential_V": {
+          "type": "number"
+        },
+        "li_binding_eV": {
+          "type": "number"
+        },
+        "li2s8_binding_eV": {
+          "type": "number"
+        },
+        "desolvation_barrier_eV": {
+          "type": "number"
+        }
       }
     },
     "scores": {
@@ -130,20 +284,50 @@
       "description": "Objetivos O1-O5 tal como los ve el bucle de adquisicion, ya en la direccion 'mayor es mejor'.",
       "additionalProperties": false,
       "properties": {
-        "O1_weak_solvation": { "type": "number" },
-        "O2_polysulfide_retention": { "type": "number" },
-        "O3_reductive_passivation": { "type": "number" },
-        "O4_transport": { "type": "number" },
-        "O5_synthesizability": { "type": "number" },
-        "pareto_rank": { "type": "integer", "minimum": 0 },
-        "acquisition_value": { "type": "number" }
+        "O1_weak_solvation": {
+          "type": "number"
+        },
+        "O2_polysulfide_retention": {
+          "type": "number"
+        },
+        "O3_reductive_passivation": {
+          "type": "number"
+        },
+        "O4_transport": {
+          "type": "number"
+        },
+        "O5_synthesizability": {
+          "type": "number"
+        },
+        "pareto_rank": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "acquisition_value": {
+          "type": "number"
+        }
       }
     },
     "status": {
       "type": "string",
-      "enum": ["generated", "filtered_out", "tier0_done", "selected", "tier1_done", "tier2_done", "tier3_done", "exported"]
+      "enum": [
+        "generated",
+        "filtered_out",
+        "tier0_done",
+        "selected",
+        "tier1_done",
+        "tier2_done",
+        "tier3_done",
+        "exported"
+      ]
     },
-    "campaign_id": { "type": "string", "pattern": "^[A-Z]+-[0-9]{2,}$" },
-    "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" }
+    "campaign_id": {
+      "type": "string",
+      "pattern": "^[A-Z]+-[0-9]{2,}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    }
   }
 }

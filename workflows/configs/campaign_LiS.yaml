@@ -81,7 +81,11 @@ tiers:
   tier0:
     method: GFN2-xTB      # g-xTB si la instalación funciona
     solvation: ALPB
-    conformers: CREST
+    alpb_solvent: ether   # solvente implícito de referencia (dietil éter)
+    conformers: rdkit     # rdkit = ETKDG+MMFF, ~1 s. CREST --quick cuesta 1-6 min por molécula
+                          # (medido: DME 95 s, TTE 330 s) y rompe el presupuesto de 5 min.
+    n_rdkit_conformers: 10
+    max_li_sites: 4       # sitios O/N/S probados para Li+ y Li2S8
     max_cpu_min_per_molecule: 5
   tier1:
     mlip: TBD_after_H2    # MACE-OMol | UMA-OMol | uMLP-electrolytes
