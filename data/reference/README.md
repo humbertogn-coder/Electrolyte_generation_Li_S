@@ -4,7 +4,7 @@ Reference and calibration data. Everything here is small, versionable and source
 
 | File | Content | Status |
 |---|---|---|
-| `seeds.csv` | Coordinating and diluent seeds (M0). | EMP has no SMILES; F5DEE and OFE flagged for confirmation against PubChem |
+| `seeds.csv` | Coordinating and diluent seeds (M0), each with the paper it comes from (`reference`, `doi`). | F5DEE and OFE SMILES flagged for confirmation against the papers' SI |
 | `salts.csv` | LiFSI and LiTFSI. | ready |
 | `tier0_reference_molecules.csv` | Five molecules with the expected tier-0 ordering (H1 success criterion). | numeric DN with source still to fill |
 | `li2s8_gfn2_alpb_ether.xyz` | Li₂S₈ reference geometry (GFN2-xTB/ALPB) for the tier-0 affinity. Not a verified global minimum. | ready |

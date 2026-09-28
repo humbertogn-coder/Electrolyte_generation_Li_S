@@ -68,6 +68,15 @@ python -m pace_s.descriptors.merge_tier0 --candidates data/campaigns/AL-01/candi
 # candidates_tier0.missing.csv lists what still needs tier 0; feed it back to the job array
 ```
 
+On Grace (HPRC), xtb is a module and Python comes as a venv rather than conda:
+
+```bash
+module load GCC/13.2.0 Python/3.11.5 xtb/6.7.1 FlexiBLAS/3.3.1
+python -m venv /scratch/user/$USER/pace_env && source /scratch/user/$USER/pace_env/bin/activate
+pip install -r requirements-grace.txt && pip install -e .
+sbatch workflows/slurm/tier0_xtb_serial.sbatch data/campaigns/AL-01/candidates_stage1.csv   # or the job array
+```
+
 Three environments, because not everything has a Windows build or resolves together:
 
 | File | Where | Purpose |
