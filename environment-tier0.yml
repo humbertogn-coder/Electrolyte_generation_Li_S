@@ -1,12 +1,12 @@
-# Entorno de tier 0 para Grace (Linux): descriptores baratos con xtb (GFN2-xTB),
-# CREST (confórmeros) y morfeus (ESP, volúmenes). CREST no tiene build para
-# Windows en conda-forge; por eso va separado del entorno principal.
+# Tier-0 environment for Grace (Linux): cheap descriptors with xtb (GFN2-xTB),
+# CREST (conformers) and morfeus (ESP, volumes). CREST has no Windows build on
+# conda-forge, which is why it is kept out of the main environment.
 #
 #   conda env create -f environment-tier0.yml
 #   conda activate pace-s-tier0
 #
-# g-xTB (Grimme 2025) se instala aparte si la prueba de la semana 0 funciona;
-# si pelea, GFN2-xTB es el plan B.
+# g-xTB (Grimme 2025) is installed separately if the week-0 test works;
+# if it fights back, GFN2-xTB is plan B.
 name: pace-s-tier0
 channels:
   - conda-forge
@@ -23,7 +23,7 @@ dependencies:
   - pyarrow
   - pyyaml
   - jsonschema>=4.18
-  - snakemake-minimal   # orquestación; no tiene build para Windows, por eso vive aquí
+  - snakemake-minimal   # orchestration; no Windows build, hence it lives here
   - pip:
       - morfeus-ml
       - -e .

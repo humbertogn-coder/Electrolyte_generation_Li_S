@@ -1,9 +1,9 @@
-"""Restricciones duras del espacio de diseño (sección 4 y 6 de la propuesta).
+"""Hard constraints of the design space (proposal sections 4 and 6).
 
-Se aplican antes de tier 0. Los umbrales viven en `design_space` del YAML de
-campaña; aquí solo está la lógica. El filtro de síntesis (SAScore, RAScore) y
-las estimaciones de punto de fusión y ebullición se añaden en módulos aparte
-porque dependen de modelos externos.
+Applied before tier 0. Thresholds live under `design_space` in the campaign
+YAML; only the logic is here. The synthesizability filter (SAScore, RAScore)
+and the melting/boiling point estimates live in separate modules because they
+depend on external models.
 """
 
 from __future__ import annotations
@@ -13,8 +13,6 @@ from typing import Any
 
 from rdkit import Chem
 from rdkit.Chem import Descriptors
-
-_PERFLUORO_UNIT = "[CX4](F)(F)"
 
 
 @dataclass(frozen=True)
@@ -34,7 +32,7 @@ def inchikey(smiles: str) -> str | None:
 
 
 def longest_perfluoroalkyl_chain(mol: Chem.Mol) -> int:
-    """Longitud máxima de una cadena contigua de carbonos -CF2- / -CF3 (criterio PFAS)."""
+    """Maximum length of a contiguous chain of -CF2- / -CF3 carbons (PFAS criterion)."""
     pf = set()
     for atom in mol.GetAtoms():
         if atom.GetSymbol() != "C":
@@ -75,7 +73,7 @@ def ratio_c_o(mol: Chem.Mol) -> float:
 
 
 def hard_filter(smiles: str, design_space: dict[str, Any]) -> FilterResult:
-    """Aplica las restricciones duras de `design_space` (del YAML de campaña)."""
+    """Apply the hard constraints of `design_space` (from the campaign YAML)."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return FilterResult(False, "invalid_smiles")
@@ -99,7 +97,7 @@ def hard_filter(smiles: str, design_space: dict[str, Any]) -> FilterResult:
     for smarts in design_space.get("forbidden_smarts", []):
         patt = Chem.MolFromSmarts(smarts)
         if patt is None:
-            raise ValueError(f"SMARTS inválido en la configuración: {smarts!r}")
+            raise ValueError(f"Invalid SMARTS in the configuration: {smarts!r}")
         if mol.HasSubstructMatch(patt):
             return FilterResult(False, f"forbidden_group:{smarts}")
 

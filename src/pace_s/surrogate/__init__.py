@@ -1,10 +1,10 @@
-"""M3 (a): modelos sustitutos con incertidumbre.
+"""M3 (a): surrogate models with uncertainty.
 
-Representación: descriptores tier 0 + fingerprints de Morgan reducidos +
-variables de formulación. Modelos: ensemble de gradient boosting con
-incertidumbre por cuantiles, más proceso gaussiano para la adquisición.
-Chemprop como referencia. Arranque en frío sembrado con ComBat.
+Representation: tier-0 descriptors + reduced Morgan fingerprints + formulation
+variables. Models: gradient-boosting ensemble with quantile uncertainty, plus a
+Gaussian process for the acquisition. Chemprop as reference. Cold start seeded
+with ComBat.
 
-Cada predicción se reporta con `distance_to_seeds` (1 - Tanimoto máximo frente
-a las semillas): el generador extrapola, y hay que decir cuánto.
+Every prediction is reported with `distance_to_seeds` (1 - maximum Tanimoto
+similarity to the seeds): the generator extrapolates, and we say by how much.
 """

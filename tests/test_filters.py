@@ -27,18 +27,18 @@ def test_mass_window(cfg_lis):
 
 def test_forbidden_groups(cfg_lis):
     ds = cfg_lis["design_space"]
-    assert hard_filter("N#CCCOCCOC", ds).reason.startswith("forbidden_group")  # nitrilo
-    assert hard_filter("SCCOCCOC", ds).reason.startswith("forbidden_group")  # tiol
+    assert hard_filter("N#CCCOCCOC", ds).reason.startswith("forbidden_group")  # nitrile
+    assert hard_filter("SCCOCCOC", ds).reason.startswith("forbidden_group")  # thiol
 
 
 def test_pfas_chain(cfg_lis):
     ds = cfg_lis["design_space"]
-    # TTE: solo cuenta carbono perfluorado (CF2/CF3); los CHF2 terminales no.
-    # Cada lado del éter tiene un solo CF2 -> cadena máxima 1
+    # TTE: only perfluorinated carbons (CF2/CF3) count; the terminal CHF2 do not.
+    # Each side of the ether has a single CF2 -> maximum chain 1
     assert longest_perfluoroalkyl_chain(Chem.MolFromSmiles("FC(F)C(F)(F)OCC(F)(F)C(F)F")) == 1
-    # OFE: -(CF2)3- contiguo -> 3, en el límite permitido
+    # OFE: contiguous -(CF2)3- -> 3, at the allowed limit
     assert longest_perfluoroalkyl_chain(Chem.MolFromSmiles("FC(F)C(F)(F)OCC(F)(F)C(F)(F)C(F)(F)C(F)F")) == 3
-    # perfluorobutil-eter: (CF2)3CF3 -> 4 > 3 -> falla
+    # perfluorobutyl ether: (CF2)3CF3 -> 4 > 3 -> fails
     r = hard_filter("FC(F)(F)C(F)(F)C(F)(F)C(F)(F)COCCOC", ds)
     assert r.reason == "perfluoroalkyl_chain_too_long"
 
@@ -58,7 +58,7 @@ def test_rdkit_descriptors_dme():
 
 def test_h_to_f_on_dme():
     children = h_to_f("COCCOC")
-    # DME tiene dos posiciones no equivalentes (CH3 terminal, CH2 interno)
+    # DME has two non-equivalent positions (terminal CH3, internal CH2)
     assert children == {"COCCOCF", "COCC(F)OC"}
     for c in children:
         assert Chem.MolFromSmiles(c) is not None

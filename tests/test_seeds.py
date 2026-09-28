@@ -1,4 +1,4 @@
-"""Regla 4: SMILES válidos desde el primer commit."""
+"""Rule 4: valid SMILES from the first commit."""
 
 from rdkit import Chem
 
@@ -33,7 +33,7 @@ def test_seeds_are_unique():
     assert len(canon) == len(set(canon))
 
 
-def test_diluents_are_fluorinated_and_solvents_mostly_not():
+def test_diluents_are_fluorinated():
     for seed in load_seeds():
         n_f = seed.smiles.count("F")
         if seed.role == "seed_diluent":
@@ -41,7 +41,7 @@ def test_diluents_are_fluorinated_and_solvents_mostly_not():
 
 
 def test_seeds_pass_hard_filter(cfg_lis):
-    """Las semillas definen el espacio; todas deben pasar sus propias restricciones."""
+    """The seeds define the space; all of them must pass their own constraints."""
     for seed in load_seeds():
         result = hard_filter(seed.smiles, cfg_lis["design_space"])
         assert result.passes, f"{seed.name}: {result.reason}"

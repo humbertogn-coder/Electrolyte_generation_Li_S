@@ -1,30 +1,30 @@
-"""Tier 0: descriptores baratos por molécula con GFN2-xTB (M2).
+"""Tier 0: cheap per-molecule descriptors with GFN2-xTB (M2).
 
-    # unas pocas moléculas, para probar
+    # a few molecules, for testing
     python -m pace_s.descriptors.run_tier0 --config workflows/configs/campaign_LiS.yaml \
         --smiles COCCOC C1COCO1 --workdir data/campaigns/test/tier0 --out tier0_test.csv
 
-    # un bloque de la tabla de candidatos (así lo llama el job array de SLURM)
+    # one block of the candidate table (this is how the SLURM job array calls it)
     python -m pace_s.descriptors.run_tier0 --config ... --candidates candidates_stage1.csv \
         --start 0 --n 50 --workdir $SCRATCH/pace-s/AL-01/tier0 --out tier0_000000.csv
 
-Por molécula (objetivo < 5 min de CPU):
-  1. descriptores 2D de RDKit (masa, TPSA, logP, fluoración, C/O) y volumen 3D;
-  2. confórmero: RDKit ETKDG + MMFF (defecto) o CREST si `tiers.tier0.conformers: CREST`;
-  3. xtb --opt --alpb <solvente>: energía, HOMO/LUMO/gap, dipolo, Gsolv, cargas;
-  4. xtb --esp sobre la geometría optimizada: ESPmin / ESPmax;
-  5. energía de unión Li+: Li+ colocado sobre cada sitio O/N/S (hasta 4, por
-     carga), optimización, y se toma el mínimo de E(complejo) - E(mol) - E(Li+);
-  6. afinidad por Li2S8: igual, anclando un Li del cluster Li2S8 de referencia
-     (`data/reference/li2s8_gfn2_alpb_ether.xyz`) al sitio.
+Per molecule (target < 5 CPU-min):
+  1. RDKit 2D descriptors (mass, TPSA, logP, fluorination, C/O) and 3D volume;
+  2. conformer: RDKit ETKDG + MMFF (default) or CREST if `tiers.tier0.conformers: CREST`;
+  3. xtb --opt --alpb <solvent>: energy, HOMO/LUMO/gap, dipole, Gsolv, charges;
+  4. xtb --esp on the optimized geometry: ESPmin / ESPmax;
+  5. Li+ binding energy: Li+ placed on each O/N/S site (up to 4, by charge),
+     optimized, and the minimum of E(complex) - E(mol) - E(Li+) is taken;
+  6. Li2S8 affinity: same, anchoring one Li of the reference Li2S8 cluster
+     (`data/reference/li2s8_gfn2_alpb_ether.xyz`) to the site.
 
-REGLA: tier 0 solo ordena y filtra. Ningún número de aquí entra al paper.
-Cada fila sale con `tier0.method` (nivel de teoría) y `tier0.wall_s`.
+RULE: tier 0 only ranks and filters. No number from here enters the paper.
+Every row carries `tier0.method` (level of theory) and `tier0.wall_s`.
 
-Limitaciones escritas: GFN2-xTB no es DFT; las energías de unión en ALPB son
-relativas y sirven para ordenar (calibración contra la tabla de Joule 2021 en
-H3), no como valores absolutos. La búsqueda de sitios es local (sin docking
-global) y puede perder modos de quelación de glimas largas.
+Written limitations: GFN2-xTB is not DFT; ALPB binding energies are relative
+and serve for ranking (calibration against the Joule 2021 table at H3), not
+as absolute values. The site search is local (no global docking) and can miss
+chelation modes of long glymes.
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ from pace_s.generate.filters import canonical
 log = logging.getLogger("pace_s.tier0")
 
 LI2S8_XYZ = DATA_DIR / "reference" / "li2s8_gfn2_alpb_ether.xyz"
-LI2S8_ANCHOR = 0  # índice del Li que se ancla al sitio (primer átomo del xyz)
+LI2S8_ANCHOR = 0  # index of the Li anchored to the site (first atom of the xyz)
 
 TIER0_COLUMNS = [
     "tier0.method", "tier0.homo_eV", "tier0.lumo_eV", "tier0.gap_eV",
@@ -80,20 +80,20 @@ class Tier0Settings:
         self.conformers = str(t.get("conformers", "rdkit")).lower()
         self.n_conformers = int(t.get("n_rdkit_conformers", 10))
         self.max_sites = int(t.get("max_li_sites", 4))
-        self.timeout_s = int(t.get("max_cpu_min_per_molecule", 5)) * 60 * 3  # holgura sobre el objetivo
+        self.timeout_s = int(t.get("max_cpu_min_per_molecule", 5)) * 60 * 3  # slack over the target
         self.threads = threads
         self.keep_files = keep_files
         self.method = f"GFN{self.gfn}-xTB" + (f"/ALPB({self.alpb})" if self.alpb else "/gas")
 
 
 # ----------------------------------------------------------------------------
-# referencias calculadas una vez por directorio de trabajo
+# references computed once per working directory
 # ----------------------------------------------------------------------------
 
 
 @lru_cache(maxsize=None)
 def reference_energies(workdir: str, gfn: int, alpb: str | None, threads: int | None) -> dict[str, float]:
-    """E(Li+) y E(Li2S8) al mismo nivel de teoría que las moléculas."""
+    """E(Li+) and E(Li2S8) at the same level of theory as the molecules."""
     ref = Path(workdir) / "_reference"
     ref.mkdir(parents=True, exist_ok=True)
     li = Structure(["Li"], np.zeros((1, 3)))
@@ -109,7 +109,7 @@ def li2s8_structure(workdir: str) -> Structure:
 
 
 # ----------------------------------------------------------------------------
-# por molécula
+# per molecule
 # ----------------------------------------------------------------------------
 
 
@@ -124,7 +124,7 @@ def _binding_scan(
     workdir: Path,
     st: Tier0Settings,
 ) -> tuple[float | None, int]:
-    """Mínimo sobre sitios de E(complejo) - E(mol) - E(ref), en eV. Devuelve (E_bind, n_ok)."""
+    """Minimum over sites of E(complex) - E(mol) - E(ref), in eV. Returns (E_bind, n_ok)."""
     best, n_ok = None, 0
     workdir.mkdir(parents=True, exist_ok=True)
     for k, site in enumerate(sites):
@@ -134,7 +134,7 @@ def _binding_scan(
             res = run_xtb(xyz, d, charge=charge, opt=True, gfn=st.gfn, alpb=st.alpb, threads=st.threads,
                           timeout_s=st.timeout_s)
         except (XtbError, OSError, ValueError) as e:
-            log.debug("sitio %d falló: %s", site, e)
+            log.debug("site %d failed: %s", site, e)
             continue
         e_bind = (res.energy_eh - e_mol - e_ref) * EH_TO_EV
         n_ok += 1
@@ -151,11 +151,11 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
     try:
         canon = canonical(smiles)
         if canon is None:
-            raise ValueError("SMILES inválido")
+            raise ValueError("invalid SMILES")
         for k, v in rdkit_descriptors(canon).items():
             out[f"tier0.{k}"] = v
 
-        # 2. confórmero
+        # 2. conformer
         mol, cid, n_conf = embed_lowest(mol_with_hs(canon), st.n_conformers)
         out["tier0.n_conformers"] = n_conf
         out["tier0.volume_A3"] = float(AllChem.ComputeMolVolume(mol, confId=cid))
@@ -165,7 +165,7 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
             xyz = run_crest(xyz, workdir / "crest", gfn=st.gfn, alpb=st.alpb, threads=st.threads)
             out["tier0.method"] = st.method + "+CREST"
 
-        # 3. optimización en solvente implícito
+        # 3. optimization in implicit solvent
         res = run_xtb(xyz, workdir / "opt", charge=0, opt=True, gfn=st.gfn, alpb=st.alpb, threads=st.threads,
                       timeout_s=st.timeout_s)
         out.update({
@@ -176,13 +176,13 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
         struct = Structure.from_xyz(res.opt_xyz)
         e_mol = res.energy_eh
 
-        # 4. ESP en la superficie
+        # 4. surface ESP
         esp = run_xtb(res.opt_xyz, workdir / "esp", charge=0, opt=False, gfn=st.gfn, alpb=st.alpb, esp=True,
                       threads=st.threads, timeout_s=st.timeout_s)
         out["tier0.esp_min_kcal_mol"] = esp.esp_min_kcal_mol
         out["tier0.esp_max_kcal_mol"] = esp.esp_max_kcal_mol
 
-        # 5 y 6. unión con Li+ y con Li2S8
+        # 5 and 6. binding with Li+ and with Li2S8
         refs = reference_energies(str(workdir.parent), st.gfn, st.alpb, st.threads)
         sites = coordination_sites(mol, res.charges, st.max_sites)
         out["tier0.n_li_sites"] = len(sites)
@@ -194,7 +194,7 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
             e_ps, _ = _binding_scan(struct, mol, sites, build, 0, e_mol, refs["Li2S8"], workdir / "li2s8", st)
             out["tier0.li2s8_binding_eV"] = e_ps
         out["tier0.error"] = None
-    except Exception as e:  # noqa: BLE001 - una molécula fallida no tumba el bloque
+    except Exception as e:  # noqa: BLE001 - one failed molecule must not kill the block
         log.warning("%s: %s", smiles, e)
         out["tier0.error"] = f"{type(e).__name__}: {str(e)[:200]}"
     out["tier0.wall_s"] = round(time.time() - t0, 1)
@@ -232,17 +232,17 @@ def _fmt(v: Any) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
-    ap.add_argument("--out", required=True, help="CSV con candidate_id + columnas tier0.*")
-    ap.add_argument("--workdir", required=True, help="directorio de cálculo (uno por campaña)")
+    ap.add_argument("--out", required=True, help="CSV with candidate_id + tier0.* columns")
+    ap.add_argument("--workdir", required=True, help="calculation directory (one per campaign)")
     src = ap.add_mutually_exclusive_group(required=True)
-    src.add_argument("--candidates", help="tabla de candidatos (CSV/parquet) del generador")
-    src.add_argument("--smiles", nargs="+", help="SMILES sueltos, para pruebas")
-    ap.add_argument("--start", type=int, default=0, help="primera fila del bloque (job array)")
-    ap.add_argument("--n", type=int, default=None, help="tamaño del bloque")
+    src.add_argument("--candidates", help="candidate table (CSV/parquet) from the generator")
+    src.add_argument("--smiles", nargs="+", help="loose SMILES, for testing")
+    ap.add_argument("--start", type=int, default=0, help="first row of the block (job array)")
+    ap.add_argument("--n", type=int, default=None, help="block size")
     ap.add_argument("--only-passing", action="store_true", default=True,
-                    help="solo filas con status=generated (defecto)")
-    ap.add_argument("--threads", type=int, default=None, help="hilos OpenMP para xtb (defecto: OMP_NUM_THREADS o 1)")
-    ap.add_argument("--keep-files", action="store_true", help="no borrar los directorios de xtb")
+                    help="only rows with status=generated (default)")
+    ap.add_argument("--threads", type=int, default=None, help="OpenMP threads for xtb (default: OMP_NUM_THREADS or 1)")
+    ap.add_argument("--keep-files", action="store_true", help="keep the xtb working directories")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -261,16 +261,16 @@ def main(argv: list[str] | None = None) -> int:
         df = df.iloc[args.start : (args.start + args.n) if args.n else None]
         items = list(zip(df["candidate_id"], df["canonical_smiles"]))
     if not items:
-        log.warning("bloque vacío (start=%d)", args.start)
+        log.warning("empty block (start=%d)", args.start)
         return 0
 
-    log.info("tier 0 (%s) sobre %d moléculas; xtb=%s", st.method, len(items), find_xtb())
+    log.info("tier 0 (%s) on %d molecules; xtb=%s", st.method, len(items), find_xtb())
     table = run_block(items, Path(args.workdir), st)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(out, index=False)
     n_err = int(table["tier0.error"].notna().sum())
-    log.info("escrito %s: %d filas, %d con error, %.0f s en total",
+    log.info("wrote %s: %d rows, %d with errors, %.0f s total",
              out, len(table), n_err, table["tier0.wall_s"].sum())
     return 0
 

@@ -1,27 +1,27 @@
-# Campaña PACE-S para Li-S elemental (sistema primario).
-# Cambiar de Li-S a Li-SPAN es cambiar este archivo, no el código.
+# PACE-S campaign for elemental Li-S (primary system).
+# Switching from Li-S to Li-SPAN means changing this file, not the code.
 campaign_id: AL-01
 system: Li-S
 seed: 20260924
 
 design_space:
-  # Restricciones duras (sección 4 y 6 de la propuesta). Un candidato que falle
-  # cualquiera se descarta antes de tier 0.
+  # Hard constraints (proposal sections 4 and 6). A candidate failing any of
+  # them is discarded before tier 0.
   allowed_elements: [C, H, O, F, S, N, Si]
-  # La propuesta dice 80-350, pero DOL (74.1) y DMM (76.1) son semillas y quedarían
-  # fuera. Mínimo bajado a 70 para que el espacio contenga a sus propias semillas.
+  # The proposal says 80-350, but DOL (74.1) and DMM (76.1) are seeds and would
+  # fall outside. Minimum lowered to 70 so the space contains its own seeds.
   mol_weight_g_mol: { min: 70, max: 350 }
-  melting_point_C: { max: -20 }       # estimado
-  boiling_point_C: { min: 80 }        # estimado
-  max_perfluoroalkyl_chain: 3         # criterio PFAS: sin -(CF2)n- con n > 3
-  forbidden_smarts:                   # grupos reactivos prohibidos
+  melting_point_C: { max: -20 }       # estimated
+  boiling_point_C: { min: 80 }        # estimated
+  max_perfluoroalkyl_chain: 3         # PFAS criterion: no -(CF2)n- with n > 3
+  forbidden_smarts:                   # forbidden reactive groups
     - "[N+](=O)[O-]"                  # nitro
-    - "C(=O)Cl"                       # cloruro de acilo
-    - "[SH]"                          # tiol
-    - "N=[N+]=[N-]"                   # azida
-    - "OO"                            # peróxido
-    - "C#N"                           # nitrilo: fuera hasta fase 2 (reactivo con Li metal)
-    - "[Cl,Br,I]"                     # halógenos pesados (cubierto también por allowed_elements)
+    - "C(=O)Cl"                       # acyl chloride
+    - "[SH]"                          # thiol
+    - "N=[N+]=[N-]"                   # azide
+    - "OO"                            # peroxide
+    - "C#N"                           # nitrile: out until phase 2 (reactive toward Li metal)
+    - "[Cl,Br,I]"                     # heavy halogens (also covered by allowed_elements)
   synthesizability:
     sascore_max: 4.5
     rascore_min: 0.7
@@ -36,18 +36,18 @@ generation:
     - ring_close
     - bridge_insert
     - branch
-  n_rounds: 3                                # rondas de mutación en anchura desde las semillas
-  # ~25 hijos nuevos por padre y ronda (medido: 340/13 en ronda 1, 8233/305 en ronda 2).
-  # Si una ronda excedería target_size.max, la frontera se submuestrea al azar con `seed`.
+  n_rounds: 3                                # breadth-first mutation rounds from the seeds
+  # ~25 new children per parent and round (measured: 340/13 in round 1, 8233/305 in round 2).
+  # If a round would exceed target_size.max, the frontier is randomly subsampled with `seed`.
   expected_children_per_parent: 25
-  stage2: { method: safe, enabled: false }   # se activa sobre los mejores de la etapa 1
+  stage2: { method: safe, enabled: false }   # enabled on the best of stage 1
   target_size: { min: 20000, max: 60000 }
 
-salts: [LiFSI, LiTFSI]                       # fijas; sales nuevas son fase 2
+salts: [LiFSI, LiTFSI]                       # fixed; new salts are phase 2
 
-# Objetivos en Pareto (no sumados). Los pesos entran en la ponderación de la
-# adquisición y en el ordenamiento final; qNEHVI trabaja sobre el frente.
-# direction: max = mayor es mejor tras la transformación en surrogate/objectives.py
+# Pareto objectives (not summed). The weights enter the acquisition reference
+# weighting and the final ranking; qNEHVI works on the front.
+# direction: max = higher is better after the transformation in surrogate/objectives.py
 objectives:
   O1_weak_solvation:
     metrics: [li_binding_eV, frac_CIP_AGG]
@@ -56,7 +56,7 @@ objectives:
   O2_polysulfide_retention:
     metrics: [solubility_Li2S8_mM]
     direction: min
-    weight: 2.0          # dominante en Li-S
+    weight: 2.0          # dominant in Li-S
   O3_reductive_passivation:
     metrics: [reduction_onset_V, inorganic_fraction]
     direction: max
@@ -67,25 +67,25 @@ objectives:
     weight: 0.6
   O5_synthesizability:
     metrics: [sascore, rascore]
-    role: constraint     # restricción, no objetivo de Pareto
+    role: constraint     # a constraint, not a Pareto objective
 
 calibration:
   gate:
     dataset: data/reference/joule2021_table1_solubility.csv
     metric: spearman
-    threshold: 0.6       # compuerta H3, semana 3
+    threshold: 0.6       # H3 gate, week 3
   internal:
     tier0_vs_tier2_r2_min: 0.6
 
 tiers:
   tier0:
-    method: GFN2-xTB      # g-xTB si la instalación funciona
+    method: GFN2-xTB      # g-xTB if the installation works
     solvation: ALPB
-    alpb_solvent: ether   # solvente implícito de referencia (dietil éter)
-    conformers: rdkit     # rdkit = ETKDG+MMFF, ~1 s. CREST --quick cuesta 1-6 min por molécula
-                          # (medido: DME 95 s, TTE 330 s) y rompe el presupuesto de 5 min.
+    alpb_solvent: ether   # reference implicit solvent (diethyl ether)
+    conformers: rdkit     # rdkit = ETKDG+MMFF, ~1 s. CREST --quick costs 1-6 min per molecule
+                          # (measured: DME 95 s, TTE 330 s) and breaks the 5-min budget.
     n_rdkit_conformers: 10
-    max_li_sites: 4       # sitios O/N/S probados para Li+ y Li2S8
+    max_li_sites: 4       # O/N/S sites tried for Li+ and Li2S8
     max_cpu_min_per_molecule: 5
   tier1:
     mlip: TBD_after_H2    # MACE-OMol | UMA-OMol | uMLP-electrolytes
@@ -93,7 +93,7 @@ tiers:
     length_ns: 2
     engine: lammps
     budget_formulations: 250
-    conductivity_method: green_kubo   # Nernst-Einstein solo como cota; sobreestima
+    conductivity_method: green_kubo   # Nernst-Einstein only as a bound; it overestimates
   tier2:
     functional: wB97X-D
     basis: def2-TZVPD
@@ -110,4 +110,4 @@ active_learning:
   batch_size: 60
   iterations: 3
   cold_start: data/reference/combat_seed.csv
-  random_baseline: true   # la comparación AL vs aleatorio es obligatoria (H4)
+  random_baseline: true   # the AL-vs-random comparison is mandatory (H4)

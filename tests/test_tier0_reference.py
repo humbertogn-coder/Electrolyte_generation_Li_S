@@ -1,6 +1,6 @@
-"""Archivo de moléculas de referencia para el criterio de éxito de H1.
-El orden lo comprueba tests/test_tier0.py (contra resultados guardados y,
-si hay xtb, recalculando)."""
+"""Reference-molecule file for the H1 success criterion.
+The ordering itself is checked in tests/test_tier0.py (against stored results
+and, when xtb is available, by recomputing)."""
 
 import pandas as pd
 from rdkit import Chem
@@ -16,4 +16,3 @@ def test_reference_file():
     for smi in df["smiles"]:
         assert Chem.MolFromSmiles(smi) is not None
     assert set(df["group"]) <= {"coordinating", "weakly_solvating", "diluent"}
-

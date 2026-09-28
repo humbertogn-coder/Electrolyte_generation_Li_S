@@ -1,11 +1,11 @@
-"""Filtro de síntesis: SAScore (RDKit Contrib) y RAScore (opcional).
+"""Synthesizability filter: SAScore (RDKit Contrib) and RAScore (optional).
 
-SAScore (Ertl y Schuffenhauer 2009): 1 fácil ... 10 difícil. Umbral en el YAML
-(`design_space.synthesizability.sascore_max`, 4.5 por defecto).
+SAScore (Ertl and Schuffenhauer 2009): 1 easy ... 10 hard. Threshold in the
+YAML (`design_space.synthesizability.sascore_max`, 4.5 by default).
 
-RAScore (Thakkar et al. 2021) no está en PyPI; si el paquete `RAscore` está
-instalado se usa, si no la columna queda vacía y el umbral no se aplica. Hay que
-instalarlo desde https://github.com/reymond-group/RAscore antes de H1.
+RAScore (Thakkar et al. 2021) is not on PyPI; if the `RAscore` package is
+installed it is used, otherwise the column stays empty and the threshold is
+not applied. Install it from https://github.com/reymond-group/RAscore before H1.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def rascore(smiles: str) -> float | None:
 
 
 def passes_synthesizability(sa: float | None, ra: float | None, thresholds: dict) -> bool:
-    """True si cumple los umbrales disponibles. Un score ausente no descarta."""
+    """True if the available thresholds are met. A missing score does not reject."""
     if sa is not None and sa > thresholds.get("sascore_max", 4.5):
         return False
     if ra is not None and ra < thresholds.get("rascore_min", 0.7):

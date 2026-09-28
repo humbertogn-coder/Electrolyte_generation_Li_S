@@ -1,5 +1,5 @@
-"""Tabla maestra de candidatos: registros anidados (contrato `candidate_table`)
-y su forma aplanada en columnas con punto (`generation.stage`, `filters.sascore`).
+"""Master candidate table: nested records (`candidate_table` contract) and
+their flattened form with dot-separated columns (`generation.stage`, `filters.sascore`).
 """
 
 from __future__ import annotations
@@ -39,8 +39,8 @@ def _is_missing(v: Any) -> bool:
 
 
 def unflatten(row: dict[str, Any]) -> dict[str, Any]:
-    """Inversa de `flatten`. Las columnas vacías (None/NaN) se omiten, salvo las
-    que el contrato declara nullable (`generation.parent_id`, `generation.operator`,
+    """Inverse of `flatten`. Empty columns (None/NaN) are dropped, except those
+    the contract declares nullable (`generation.parent_id`, `generation.operator`,
     `filters.hard_fail_reason`)."""
     nullable = {"generation.parent_id", "generation.operator", "filters.hard_fail_reason"}
     out: dict[str, Any] = {}
@@ -58,14 +58,14 @@ def unflatten(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _py(v: Any) -> Any:
-    """Convierte escalares de numpy/pandas a tipos nativos para jsonschema."""
+    """Convert numpy/pandas scalars to native types for jsonschema."""
     if hasattr(v, "item"):
         v = v.item()
     return v
 
 
 def validate_frame(df: pd.DataFrame, max_errors: int = 20) -> list[str]:
-    """Valida cada fila contra el contrato. Devuelve mensajes (vacío si todo es válido)."""
+    """Validate every row against the contract. Returns messages (empty if all valid)."""
     msgs: list[str] = []
     for i, row in enumerate(df.to_dict(orient="records")):
         errs = errors("candidate_table", unflatten(row))

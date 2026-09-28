@@ -1,11 +1,11 @@
-"""M2: tier 0, descriptores baratos (< 5 min CPU por molécula).
+"""M2: tier 0, cheap descriptors (< 5 CPU-min per molecule).
 
-Wrappers sobre xtb (GFN2-xTB o g-xTB), CREST, morfeus y RDKit. Produce las
-columnas `tier0.*` del contrato `candidate_table`.
+Wrappers around xtb (GFN2-xTB or g-xTB), CREST, morfeus and RDKit. Produces
+the `tier0.*` columns of the `candidate_table` contract.
 
-REGLA: tier 0 solo se usa para ordenar y filtrar. Ningún valor de esta capa
-entra al paper. Todo número reportado viene de tier 1 o superior.
+RULE: tier 0 is used only to rank and filter. No value from this layer goes
+into the paper. Every reported number comes from tier 1 or higher.
 
-Descriptor central: `li2s8_binding_eV` (energía de interacción solvente-Li2S8),
-calibrado contra la Tabla 1 de Joule 2021 en la compuerta H3.
+Central descriptor: `li2s8_binding_eV` (solvent-Li2S8 interaction energy),
+calibrated against Table 1 of Joule 2021 at the H3 gate.
 """

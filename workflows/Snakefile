@@ -1,6 +1,5 @@
-# Orquestación de PACE-S con Snakemake. Esqueleto: las reglas se rellenan a
-# medida que cada módulo se implementa. Con 3 iteraciones de bucle, Snakemake
-# deja de ser opcional.
+# PACE-S orchestration with Snakemake. Skeleton: rules are filled in as each
+# module is implemented. With three loop iterations, Snakemake stops being optional.
 #
 #   snakemake --configfile workflows/configs/campaign_LiS.yaml -n
 
@@ -30,7 +29,7 @@ rule tier0:
     output:
         f"{OUT}/tier0/tier0_all.csv",
     shell:
-        # en Grace este paso se lanza como job array (workflows/slurm/tier0_xtb_array.sbatch);
-        # aquí queda la versión secuencial para pruebas pequeñas
+        # on Grace this step is launched as a job array (workflows/slurm/tier0_xtb_array.sbatch);
+        # this is the sequential version for small tests
         "python -m pace_s.descriptors.run_tier0 --config {workflow.configfiles[0]} "
         "--candidates {input} --workdir $SCRATCH/pace-s/{CAMPAIGN}/tier0 --out {output}"

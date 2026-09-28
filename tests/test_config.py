@@ -1,4 +1,4 @@
-"""Cambiar de Li-S a Li-SPAN es cambiar el YAML, no el código."""
+"""Switching from Li-S to Li-SPAN means changing the YAML, not the code."""
 
 import pytest
 

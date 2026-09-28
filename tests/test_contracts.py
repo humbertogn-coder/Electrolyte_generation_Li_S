@@ -1,4 +1,4 @@
-"""Regla 4: JSON que valida contra su esquema."""
+"""Rule 4: JSON that validates against its schema."""
 
 import copy
 import json
@@ -16,7 +16,7 @@ EXAMPLES = CONTRACTS_DIR / "examples"
 
 @pytest.mark.parametrize("name", ["kmc_interface", "candidate_table"])
 def test_schemas_are_valid_draft2020(name):
-    validator(name)  # check_schema dentro
+    validator(name)  # check_schema inside
 
 
 def test_kmc_example_validates():
@@ -28,7 +28,7 @@ def test_kmc_example_validates():
 def test_candidate_example_validates():
     rec = load_and_validate("candidate_table", EXAMPLES / "PSM-000001.json")
     assert rec["generation"]["stage"] == 0
-    # la clave de deduplicación debe ser consistente con RDKit
+    # the deduplication key must be consistent with RDKit
     mol = Chem.MolFromSmiles(rec["smiles"])
     assert Chem.MolToSmiles(mol) == rec["canonical_smiles"]
     assert Chem.MolToInchiKey(mol) == rec["inchikey"]

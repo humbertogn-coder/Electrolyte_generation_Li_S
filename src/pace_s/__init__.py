@@ -1,7 +1,7 @@
-"""PACE-S: pipeline de generación y cribado activo de electrolitos para Li-S / Li-SPAN.
+"""PACE-S: pipeline for active generation and screening of Li-S / Li-SPAN electrolytes.
 
-Regla transversal: todo número que salga de este paquete lleva `campaign_id`,
-`tier` y `level_of_theory`. Tier 0 solo ordena y filtra; nunca entra al paper.
+Cross-cutting rule: every number leaving this package carries `campaign_id`,
+`tier` and `level_of_theory`. Tier 0 only ranks and filters; it never enters the paper.
 """
 
 from pathlib import Path

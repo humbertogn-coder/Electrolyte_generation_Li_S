@@ -1,4 +1,4 @@
-"""Semillas del espacio de diseño (M0), leídas de `data/reference/seeds.csv`."""
+"""Design-space seeds (M0), read from `data/reference/seeds.csv`."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class Seed:
 
 
 def load_seeds(path: str | Path = SEEDS_CSV, include_pending: bool = False) -> list[Seed]:
-    """Semillas con SMILES definido. `include_pending=True` incluye filas sin SMILES (p. ej. EMP)."""
+    """Seeds with a defined SMILES. `include_pending=True` also returns rows without one (e.g. EMP)."""
     df = pd.read_csv(path, dtype=str).fillna("")
     seeds = [Seed(r["name"], r["role"], r["smiles"], r["full_name"], r["notes"]) for _, r in df.iterrows()]
     if include_pending:

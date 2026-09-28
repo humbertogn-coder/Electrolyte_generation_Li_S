@@ -1,6 +1,6 @@
-"""M5 (a): SHAP, frente de Pareto y figuras.
+"""M5 (a): SHAP, Pareto front and figures.
 
-Dos preguntas para SHAP:
-- ¿Qué fragmentos empujan hacia CIP/AGG y cuáles hacia SSIP?
-- ¿La fluoración domina, o hay rutas no fluoradas competitivas? (EMP, Amanchukwu)
+Two questions for SHAP:
+- Which fragments push toward CIP/AGG and which toward SSIP?
+- Does fluorination dominate, or are there competitive non-fluorinated routes? (EMP, Amanchukwu)
 """

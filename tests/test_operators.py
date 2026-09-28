@@ -1,5 +1,5 @@
-"""Cada operador de la etapa 1 con un ejemplo de resultado conocido, más
-propiedades comunes sobre todas las semillas."""
+"""Every stage-1 operator with a known-result example, plus common properties
+over all the seeds."""
 
 import pytest
 from rdkit import Chem
@@ -22,22 +22,22 @@ def test_registry_complete():
 
 def test_h_to_f():
     assert ops.h_to_f(DME) == {"COCCOCF", "COCC(F)OC"}
-    # un carbono ya perfluorado no recibe más F
+    # an already perfluorinated carbon receives no more F
     assert ops.h_to_f("FC(F)(F)OC(F)(F)F") == set()
 
 
 def test_chain_extend():
     assert ops.chain_extend("COC") == {"CCOC"}
     assert ops.chain_extend(DME) == {"CCOCCOC", "COCCCOC"}
-    # no toca enlaces de anillo
+    # ring bonds are not touched
     assert ops.chain_extend(THF) == set()
 
 
 def test_chain_contract():
     assert ops.chain_contract(DME) == {"COCOC"}
-    # no elimina un CH2 entre dos O (crearía O-O)
+    # a CH2 between two O is not removed (it would create O-O)
     assert ops.chain_contract("COCOC") == set()
-    # no toca anillos
+    # rings are not touched
     assert ops.chain_contract(THF) == set()
 
 
@@ -53,15 +53,15 @@ def test_heteroatom_swap():
 
 def test_ring_open():
     kids = ops.ring_open(THF)
-    assert "CCCCCOC" in kids  # apertura por C-O, tapas metilo
-    assert "CCCOCCC" in kids  # apertura por el C-C opuesto al O
+    assert "CCCCCOC" in kids  # opened at C-O, methyl caps
+    assert "CCCOCCC" in kids  # opened at the C-C opposite the O
     for k in kids:
         assert Chem.MolFromSmiles(k).GetRingInfo().NumRings() == 0
     assert ops.ring_open(DME) == set()
 
 
 def test_ring_close():
-    assert ops.ring_close(DME) == {"C1COCCO1"}  # 1,4-dioxano
+    assert ops.ring_close(DME) == {"C1COCCO1"}  # 1,4-dioxane
     kids = ops.ring_close("COCCCOC")
     assert kids
     for k in kids:
@@ -80,9 +80,9 @@ def test_branch():
 
 @pytest.mark.parametrize("name", sorted(ops.OPERATORS))
 def test_operator_properties_on_seeds(name):
-    """Sobre todas las semillas: hijos válidos, canónicos, sin cargas ni radicales,
-    distintos del padre, con los mismos elementos permitidos o Si/S/N introducidos
-    solo por los operadores que los introducen."""
+    """Over all seeds: valid, canonical children, no charges or radicals,
+    different from the parent, and only the allowed elements (Si/S/N appear
+    only through the operators that introduce them)."""
     op = ops.OPERATORS[name]
     for seed in load_seeds():
         parent = canonical(seed.smiles)

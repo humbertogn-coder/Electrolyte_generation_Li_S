@@ -1,17 +1,17 @@
-"""Genera el espacio de diseño de la etapa 1 desde las semillas.
+"""Generate the stage-1 design space from the seeds.
 
     python -m pace_s.generate.run --config workflows/configs/campaign_LiS.yaml \
         --out data/campaigns/AL-01/candidates_stage1.csv [--rounds 2] [--max-size 60000]
 
-Búsqueda en anchura por rondas: en cada ronda se aplican todos los operadores
-de `generation.stage1_operators` a las moléculas que pasaron el filtro duro en
-la ronda anterior. Cada hijo nuevo se registra con su padre y su operador, se
-filtra (`filters.hard_filter` y filtro de síntesis) y se le calcula la
-distancia a las semillas. Nada se descarta en silencio: las moléculas que no
-pasan quedan en la tabla con `status = filtered_out` y la razón.
+Breadth-first search by rounds: in each round every operator listed in
+`generation.stage1_operators` is applied to the molecules that passed the
+hard filter in the previous round. Every new child is recorded with its
+parent and operator, filtered (`filters.hard_filter` and the synthesizability
+filter) and given its distance to the seeds. Nothing is dropped silently:
+molecules that fail stay in the table with `status = filtered_out` and the reason.
 
-La salida cumple el contrato `contracts/candidate_table.schema.json` aplanado
-(`generate.table.validate_frame` lo comprueba antes de escribir).
+The output satisfies the flattened `contracts/candidate_table.schema.json`
+(`generate.table.validate_frame` checks it before writing).
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def git_commit() -> str:
 
 
 class SeedDistance:
-    """1 - Tanimoto máximo (Morgan r=2, 2048 bits) frente a las semillas."""
+    """1 - maximum Tanimoto similarity (Morgan r=2, 2048 bits) to the seeds."""
 
     def __init__(self, seeds: list[Seed]):
         self._fps = [_FPGEN.GetFingerprint(Chem.MolFromSmiles(s.smiles)) for s in seeds]
@@ -133,7 +133,7 @@ def generate_space(
     operator_names = list(gen_cfg["stage1_operators"])
     unknown = set(operator_names) - set(ops.OPERATORS)
     if unknown:
-        raise ValueError(f"Operadores desconocidos en la configuración: {sorted(unknown)}")
+        raise ValueError(f"Unknown operators in the configuration: {sorted(unknown)}")
 
     dist = SeedDistance(seeds)
     commit = git_commit()
@@ -141,14 +141,14 @@ def generate_space(
     seen: dict[str, str] = {}  # canonical -> candidate_id
     n = 0
 
-    # ronda 0: semillas
+    # round 0: seeds
     for s in seeds:
         n += 1
         rec = _record(n, s.smiles, s.role, 0, None, "seed", cfg, dist, commit)
         seen[rec["canonical_smiles"]] = rec["candidate_id"]
         records.append(rec)
     frontier = [r for r in records if r["status"] == "generated"]
-    log.info("ronda 0: %d semillas, %d pasan el filtro", len(seeds), len(frontier))
+    log.info("round 0: %d seeds, %d pass the filter", len(seeds), len(frontier))
 
     per_operator: Counter = Counter()
     rng = random.Random(int(cfg.get("seed", 0)))
@@ -157,15 +157,15 @@ def generate_space(
         t0 = time.time()
         next_frontier: list[dict[str, Any]] = []
         n_new = 0
-        # Si la ronda completa excedería max_size, se submuestrea la frontera al
-        # azar (semilla fija) en lugar de truncar por orden: así la cobertura del
-        # espacio es uniforme y reproducible, no alfabética.
+        # If the full round would exceed max_size, the frontier is randomly
+        # subsampled (fixed seed) instead of truncated by order: coverage of the
+        # space stays uniform and reproducible, not alphabetical.
         remaining = max_size - len(records)
         expected = len(frontier) * children_per_parent
         if expected > remaining and len(frontier) > 1:
             k = max(1, int(remaining / children_per_parent))
             frontier = rng.sample(sorted(frontier, key=lambda r: r["canonical_smiles"]), k)
-            log.info("ronda %d: frontera submuestreada a %d padres para respetar max_size=%d", rnd, k, max_size)
+            log.info("round %d: frontier subsampled to %d parents to respect max_size=%d", rnd, k, max_size)
         for parent in sorted(frontier, key=lambda r: r["canonical_smiles"]):
             role = CHILD_ROLE.get(parent["role"], parent["role"])
             for name in operator_names:
@@ -189,20 +189,20 @@ def generate_space(
         n_ok = len(next_frontier)
         if frontier:
             children_per_parent = max(1.0, n_new / len(frontier))
-        log.info("ronda %d: %d nuevas, %d pasan filtros, total %d (%.1f s)",
+        log.info("round %d: %d new, %d pass the filters, total %d (%.1f s)",
                  rnd, n_new, n_ok, len(records), time.time() - t0)
         frontier = next_frontier
         if len(records) >= max_size:
-            log.info("alcanzado max_size=%d", max_size)
+            log.info("reached max_size=%d", max_size)
             break
         if not frontier:
             break
 
     df = pd.DataFrame([flatten(r) for r in records])
-    log.info("por operador: %s", dict(per_operator))
-    log.info("por estado: %s", df["status"].value_counts().to_dict())
+    log.info("per operator: %s", dict(per_operator))
+    log.info("per status: %s", df["status"].value_counts().to_dict())
     fails = df.loc[df["status"] == "filtered_out", "filters.hard_fail_reason"]
-    log.info("razones de descarte: %s", fails.str.split(":").str[0].value_counts().to_dict())
+    log.info("rejection reasons: %s", fails.str.split(":").str[0].value_counts().to_dict())
     return df
 
 
@@ -217,10 +217,10 @@ def write_table(df: pd.DataFrame, out: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
-    ap.add_argument("--out", required=True, help=".csv o .parquet")
-    ap.add_argument("--rounds", type=int, default=None, help="rondas de mutación (defecto: generation.n_rounds)")
-    ap.add_argument("--max-size", type=int, default=None, help="defecto: generation.target_size.max")
-    ap.add_argument("--no-validate", action="store_true", help="no validar filas contra el contrato")
+    ap.add_argument("--out", required=True, help=".csv or .parquet")
+    ap.add_argument("--rounds", type=int, default=None, help="mutation rounds (default: generation.n_rounds)")
+    ap.add_argument("--max-size", type=int, default=None, help="default: generation.target_size.max")
+    ap.add_argument("--no-validate", action="store_true", help="skip row validation against the contract")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -234,13 +234,13 @@ def main(argv: list[str] | None = None) -> int:
         if msgs:
             for m in msgs:
                 log.error(m)
-            log.error("la tabla no cumple el contrato candidate_table; no se escribe")
+            log.error("the table does not satisfy the candidate_table contract; nothing written")
             return 1
-        log.info("todas las filas validan contra candidate_table.schema.json")
+        log.info("all rows validate against candidate_table.schema.json")
 
     out = Path(args.out)
     write_table(df, out)
-    log.info("escrito %s (%d filas)", out, len(df))
+    log.info("wrote %s (%d rows)", out, len(df))
     return 0
 
 

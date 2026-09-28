@@ -1,6 +1,5 @@
-"""M5 (b): exportación al formato propio (`contracts/kmc_interface.schema.json`)
-y adaptador hacia los archivos de entrada del kMC 3D (`kmc3d_adapter.py`).
+"""M5 (b): export to the own format (`contracts/kmc_interface.schema.json`)
+and adapter to the 3D kMC input files (`kmc3d_adapter.py`).
 
-Acoplamiento en una sola dirección: PACE-S puede depender de kmc3d; kmc3d
-nunca depende de PACE-S.
+One-way coupling: PACE-S may depend on kmc3d; kmc3d never depends on PACE-S.
 """

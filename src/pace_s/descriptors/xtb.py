@@ -1,12 +1,12 @@
-"""Wrapper mínimo de xtb (GFN2-xTB) para tier 0.
+"""Minimal xtb (GFN2-xTB) wrapper for tier 0.
 
-Localiza el binario (`XTB_BIN` o `xtb` en el PATH), lo ejecuta en un directorio
-de trabajo aislado y parsea lo que tier 0 necesita: energía total, HOMO/LUMO/gap,
-dipolo, Gsolv (ALPB), cargas de Mulliken y, con `--esp`, el potencial
-electrostático en la superficie.
+Locates the binary (`XTB_BIN` or `xtb` on the PATH), runs it in an isolated
+working directory and parses what tier 0 needs: total energy, HOMO/LUMO/gap,
+dipole, Gsolv (ALPB), Mulliken charges and, with `--esp`, the surface
+electrostatic potential.
 
-Unidades de salida: energías en Eh salvo que el nombre diga lo contrario
-(`*_eV`, `*_kcal_mol`); dipolo en Debye; ESP en kcal/mol.
+Output units: energies in Eh unless the name says otherwise (`*_eV`,
+`*_kcal_mol`); dipole in Debye; ESP in kcal/mol.
 """
 
 from __future__ import annotations
@@ -60,10 +60,10 @@ _RE_DIPOLE = re.compile(r"molecular dipole:.*?full:\s+(-?\d+\.\d+)\s+(-?\d+\.\d+
 
 
 def parse_output(text: str) -> dict:
-    """Extrae los campos de un `xtb` normal. Toma la última ocurrencia de cada uno."""
+    """Extract the fields of a regular `xtb` run. Takes the last occurrence of each."""
     if "normal termination of xtb" not in text:
         tail = "\n".join(text.strip().splitlines()[-15:])
-        raise XtbError(f"xtb no terminó normalmente:\n{tail}")
+        raise XtbError(f"xtb did not terminate normally:\n{tail}")
 
     def last(rx: re.Pattern, group: int = 1, cast=float):
         m = rx.findall(text)
@@ -74,7 +74,7 @@ def parse_output(text: str) -> dict:
 
     energy = last(_RE_ENERGY)
     if energy is None:
-        raise XtbError("sin TOTAL ENERGY en la salida de xtb")
+        raise XtbError("no TOTAL ENERGY in the xtb output")
     return {
         "energy_eh": energy,
         "gap_eV": last(_RE_GAP),
@@ -99,10 +99,10 @@ def run_xtb(
     timeout_s: int = 900,
     extra: list[str] | None = None,
 ) -> XtbResult:
-    """Ejecuta xtb sobre `xyz` dentro de `workdir` (se crea) y devuelve el resultado parseado."""
+    """Run xtb on `xyz` inside `workdir` (created if needed) and return the parsed result."""
     xtb = find_xtb()
     if xtb is None:
-        raise XtbError("no se encontró xtb: instala `conda install -c conda-forge xtb` o define XTB_BIN")
+        raise XtbError("xtb not found: install it with `conda install -c conda-forge xtb` or set XTB_BIN")
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
     xyz = Path(xyz).resolve()
@@ -126,13 +126,13 @@ def run_xtb(
     n = threads or int(env.get("OMP_NUM_THREADS", "1"))
     env.update({"OMP_NUM_THREADS": str(n), "MKL_NUM_THREADS": str(n), "OMP_STACKSIZE": env.get("OMP_STACKSIZE", "1G")})
     try:
-        # encoding explícito: en Windows el defecto es cp1252 y la salida de xtb
-        # trae bytes que esa codificación no puede decodificar
+        # explicit encoding: on Windows the default is cp1252 and the xtb output
+        # contains bytes that codec cannot decode
         proc = subprocess.run(cmd, cwd=workdir, env=env, capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=timeout_s)
     except subprocess.TimeoutExpired as e:
-        raise XtbError(f"xtb excedió {timeout_s} s en {workdir}") from e
-    # xtb escribe "normal termination" en stderr; se parsea todo junto
+        raise XtbError(f"xtb exceeded {timeout_s} s in {workdir}") from e
+    # xtb prints "normal termination" to stderr; both streams are parsed together
     text = proc.stdout + "\n" + proc.stderr
     (workdir / "xtb.out").write_text(text, encoding="utf-8")
     fields = parse_output(text)
@@ -164,14 +164,14 @@ def run_crest(
     threads: int | None = None,
     timeout_s: int = 3600,
 ) -> Path:
-    """Búsqueda de confórmeros con CREST; devuelve el xyz del mejor confórmero (`crest_best.xyz`).
+    """Conformer search with CREST; returns the best conformer's xyz (`crest_best.xyz`).
 
-    CREST no tiene build para Windows: en la laptop se usa el fallback de RDKit
-    (`geometry.embed_lowest`). Con `quick=True` cuesta 1-5 min por molécula pequeña.
+    CREST has no Windows build: on a laptop the RDKit fallback is used
+    (`geometry.embed_lowest`). With `quick=True` it costs 1-5 min per small molecule.
     """
     crest = find_crest()
     if crest is None:
-        raise XtbError("no se encontró crest (define CREST_BIN o usa conformers: rdkit)")
+        raise XtbError("crest not found (set CREST_BIN or use conformers: rdkit)")
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
     src = workdir / "input.xyz"
@@ -190,5 +190,5 @@ def run_crest(
     (workdir / "crest.out").write_text(proc.stdout + "\n" + proc.stderr, encoding="utf-8")
     best = workdir / "crest_best.xyz"
     if not best.exists():
-        raise XtbError(f"crest no produjo crest_best.xyz en {workdir}")
+        raise XtbError(f"crest did not produce crest_best.xyz in {workdir}")
     return best

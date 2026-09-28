@@ -1,5 +1,5 @@
 10
-Li2S8 optimizada con GFN2-xTB/ALPB(ether), xtb 6.7.1, desde [Li]SSSSSSSS[Li] embebido con RDKit ETKDGv3+UFF (seed 7). Referencia de tier 0; NO es un minimo global verificado.
+Li2S8 optimized with GFN2-xTB/ALPB(ether), xtb 6.7.1, from [Li]SSSSSSSS[Li] embedded with RDKit ETKDGv3+UFF (seed 7). Tier-0 reference; NOT a verified global minimum.
 Li           4.14048654608259        1.86164278324811       -0.90650944668411
 S            1.97683397894143        1.82477673968263       -0.34738958138587
 S            2.07956404143633       -0.12635476724519        0.29935812263285

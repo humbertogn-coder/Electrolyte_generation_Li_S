@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pace-s"
 version = "0.0.1"
-description = "Pipeline de generacion y cribado activo de electrolitos para baterias de Li metal con azufre (Li-S / Li-SPAN)"
+description = "Pipeline for active generation and screening of electrolytes for lithium-metal batteries with sulfur chemistry (Li-S / Li-SPAN)"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Carlos Guerrero", email = "humbertogn@tamu.edu" }]
@@ -30,4 +30,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q -m 'not slow'"
-markers = ["slow: tests que recalculan con xtb (minutos); correr con -m slow"]
+markers = ["slow: tests that recompute with xtb (minutes); run with -m slow"]

@@ -1,9 +1,9 @@
-"""Configuración de campaña.
+"""Campaign configuration.
 
-Los pesos de los objetivos y las restricciones del espacio de diseño viven en
-`workflows/configs/campaign_*.yaml`. Cambiar de Li-S a Li-SPAN es cambiar de
-archivo, no de código. Un YAML puede declarar `inherit: <otro.yaml>`; las claves
-del hijo se fusionan sobre las del padre (fusión profunda de diccionarios).
+Objective weights and design-space constraints live in
+`workflows/configs/campaign_*.yaml`. Switching from Li-S to Li-SPAN means
+switching files, not code. A YAML may declare `inherit: <other.yaml>`; the
+child's keys are merged over the parent's (deep dictionary merge).
 """
 
 from __future__ import annotations
@@ -52,16 +52,16 @@ def load_campaign(path: str | Path) -> dict[str, Any]:
 def _check(cfg: dict[str, Any]) -> None:
     missing = [k for k in ("campaign_id", "system", "objectives", "design_space") if k not in cfg]
     if missing:
-        raise ValueError(f"Configuración incompleta, faltan: {missing}")
+        raise ValueError(f"Incomplete configuration, missing: {missing}")
     if cfg["system"] not in ("Li-S", "Li-SPAN"):
-        raise ValueError(f"system debe ser Li-S o Li-SPAN, no {cfg['system']!r}")
+        raise ValueError(f"system must be Li-S or Li-SPAN, not {cfg['system']!r}")
     objs = set(cfg["objectives"])
     if objs != set(OBJECTIVE_KEYS):
-        raise ValueError(f"Los objetivos deben ser exactamente {OBJECTIVE_KEYS}; hay {sorted(objs)}")
+        raise ValueError(f"Objectives must be exactly {OBJECTIVE_KEYS}; got {sorted(objs)}")
 
 
 def objective_weights(cfg: dict[str, Any]) -> dict[str, float]:
-    """Pesos de los objetivos de Pareto (O5 es restricción y no tiene peso)."""
+    """Weights of the Pareto objectives (O5 is a constraint and has no weight)."""
     return {
         k: float(v["weight"])
         for k, v in cfg["objectives"].items()

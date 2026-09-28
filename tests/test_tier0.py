@@ -1,5 +1,5 @@
-"""Tier 0: parser de xtb (sin binario), geometría (sin binario) e integración
-(solo si hay xtb en el PATH o en XTB_BIN)."""
+"""Tier 0: xtb parser (no binary), geometry (no binary) and integration
+(only if xtb is on the PATH or in XTB_BIN)."""
 
 from pathlib import Path
 
@@ -35,7 +35,7 @@ def test_parse_rejects_abnormal():
 
 
 # ----------------------------------------------------------------------------
-# geometría
+# geometry
 # ----------------------------------------------------------------------------
 
 
@@ -44,8 +44,8 @@ def test_embed_and_sites():
     assert n >= 1
     assert mol.GetNumConformers() == n
     sites = g.coordination_sites(mol)
-    assert sites == [1, 4]  # los dos oxígenos de DME (índices del SMILES canónico)
-    # con cargas: el más negativo primero
+    assert sites == [1, 4]  # the two oxygens of DME (canonical SMILES indices)
+    # with charges: most negative first
     charges = [0.0] * mol.GetNumAtoms()
     charges[4] = -0.5
     charges[1] = -0.3
@@ -60,7 +60,7 @@ def test_place_ion_distance_and_direction():
     assert len(complex_.symbols) == len(s.symbols) + 1
     d = np.linalg.norm(complex_.coords[-1] - s.coords[1])
     assert abs(d - g.ION_DISTANCE_A["O"]) < 1e-6
-    # el Li queda más lejos de los vecinos del O que de ese O
+    # the Li ends up farther from the O's neighbors than from that O
     for n in mol.GetAtomWithIdx(1).GetNeighbors():
         assert np.linalg.norm(complex_.coords[-1] - s.coords[n.GetIdx()]) > d
 
@@ -97,14 +97,14 @@ def test_xyz_roundtrip(tmp_path):
 
 
 # ----------------------------------------------------------------------------
-# referencia (sin xtb: contra los resultados guardados; con xtb: recalculando)
+# reference (without xtb: against stored results; with xtb: recomputing)
 # ----------------------------------------------------------------------------
 
 
 def _check_reference_order(df):
-    """Criterio de éxito de H1 con lo que tier 0 realmente discrimina:
-    ESPmin (proxy de DN) ordena coordinantes < débilmente solvatante < diluyente,
-    ESPmax marca a los diluyentes, y DME (bidentado) es el que más une Li+."""
+    """H1 success criterion with what tier 0 actually discriminates:
+    ESPmin (donor-number proxy) orders coordinating < weakly solvating < diluent,
+    ESPmax flags the diluents, and DME (bidentate) binds Li+ the strongest."""
     d = df.set_index("name")
     coord = ["DME", "DOL", "THP"]
     assert max(d.loc[coord, "tier0.esp_min_kcal_mol"]) < d.loc["F5DEE", "tier0.esp_min_kcal_mol"]
@@ -127,7 +127,7 @@ def test_reference_results_file():
     _check_reference_order(df)
 
 
-@pytest.mark.skipif(not HAS_XTB, reason="xtb no está instalado")
+@pytest.mark.skipif(not HAS_XTB, reason="xtb is not installed")
 def test_tier0_dme_with_xtb(tmp_path, cfg_lis):
     from pace_s.descriptors.run_tier0 import Tier0Settings, compute_tier0
 
@@ -142,9 +142,9 @@ def test_tier0_dme_with_xtb(tmp_path, cfg_lis):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(not HAS_XTB, reason="xtb no está instalado")
+@pytest.mark.skipif(not HAS_XTB, reason="xtb is not installed")
 def test_tier0_reproduces_donor_order_with_xtb(tmp_path, cfg_lis):
-    """Hito H1 recalculado (~1 min con 4 hilos). `pytest -m slow` para incluirlo."""
+    """Milestone H1 recomputed (~1 min with 4 threads). `pytest -m slow` to include it."""
     import pandas as pd
 
     from pace_s.descriptors.run_tier0 import Tier0Settings, run_block

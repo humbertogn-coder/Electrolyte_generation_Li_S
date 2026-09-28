@@ -1,56 +1,56 @@
 # PACE-S
 
-**P**ipeline de generación y cribado **AC**tivo de **E**lectrolitos para baterías de Li metal con azufre (Li-S, con transferencia a Li-SPAN).
+**P**ipeline for **A**ctive generation and s**C**reening of **E**lectrolytes for lithium-metal batteries with **S**ulfur chemistry (Li-S, with transfer to Li-SPAN).
 
-Balbuena Group, Texas A&M University. Repositorio independiente del modelo kMC 3D de morfología (`kmc3d`): PACE-S puede depender de `kmc3d`, `kmc3d` nunca depende de PACE-S.
+Balbuena Group, Texas A&M University. Independent of the 3D kinetic Monte Carlo morphology model (`kmc3d`): PACE-S may depend on `kmc3d`; `kmc3d` never depends on PACE-S.
 
-Posicionamiento en una frase: existe el mapa de los solventes conocidos para Li-S; falta la máquina que proponga los desconocidos y que llegue hasta morfología.
+Positioning in one sentence: the map of known Li-S solvents exists; what is missing is the machine that proposes unknown ones and carries them all the way to morphology.
 
-## Qué hace
-
-```
-M0  Semillas, espacio de diseño y datos de calibración
-M1  Generador por fragmentos y mutaciones      -->  20k-60k SMILES
-M2  Tier 0: filtros + descriptores baratos     -->  ~3k supervivientes
-M3  Modelos sustitutos + adquisición qNEHVI    <--+
-M4  Tier 1: MLIP-MD (oráculo principal)        ---+  bucle de active learning
-    Tier 2: DFT (finalistas)
-    Tier 3: AIMD (top 3, mecanismo)
-M5  SHAP + exportación de parámetros           -->  kMC 3D de morfología
-```
-
-## Estructura
+## What it does
 
 ```
-contracts/          esquemas JSON congelados (semana 0) y ejemplos
+M0  Seeds, design space and calibration data
+M1  Fragment-based generator and mutations     -->  20k-60k SMILES
+M2  Tier 0: filters + cheap descriptors        -->  ~3k survivors
+M3  Surrogate models + qNEHVI acquisition      <--+
+M4  Tier 1: MLIP-MD (main oracle)              ---+  active-learning loop
+    Tier 2: DFT (finalists)
+    Tier 3: AIMD (top 3, mechanism)
+M5  SHAP + parameter export                    -->  3D kMC morphology model
+```
+
+## Layout
+
+```
+contracts/          frozen JSON schemas (week 0) and examples
 src/pace_s/
-  generate/         semillas, operadores de mutación, filtros duros y de síntesis
+  generate/         seeds, mutation operators, hard and synthesizability filters
   descriptors/      tier 0: xtb, CREST, morfeus, RDKit
   oracles/          tier 1 MLIP-MD, tier 2 DFT, tier 3 AIMD
-  surrogate/        modelos sustitutos con incertidumbre
-  acquire/          qNEHVI (BoTorch), gestión del bucle
-  analysis/         SHAP, Pareto, figuras
-  export/           formato propio + adaptador a kmc3d
+  surrogate/        surrogate models with uncertainty
+  acquire/          qNEHVI (BoTorch), loop management
+  analysis/         SHAP, Pareto, figures
+  export/           own format + kmc3d adapter
 workflows/
-  slurm/            plantillas de job array (CPU) y GPU para Grace
-  configs/          YAML por campaña; los pesos Li-S vs Li-SPAN viven aquí
+  slurm/            job-array (CPU) and GPU templates for Grace
+  configs/          one YAML per campaign; Li-S vs Li-SPAN weights live here
 data/
-  manifests/        índices y checksums de cada campaña (NO trayectorias)
-  reference/        Tabla 1 de Joule 2021, ComBat, moléculas de referencia
+  manifests/        per-campaign indices and checksums (NO trajectories)
+  reference/        Joule 2021 Table 1, ComBat, reference molecules
 tests/
 notebooks/
 ```
 
-## Instalación
+## Installation
 
 ```bash
-conda env create -f environment.yml          # laptop: generación, sustitutos, AL, tests
+conda env create -f environment.yml          # laptop: generation, surrogates, AL, tests
 conda activate pace-s
 pip install -e .
 pytest
 ```
 
-Para correr tier 0 en la laptop (pruebas pequeñas) basta añadir xtb al entorno principal, que sí tiene build para Windows:
+To run tier 0 on a laptop (small tests) add xtb to the main environment; it does have a Windows build:
 
 ```bash
 conda install -c conda-forge xtb
@@ -58,39 +58,39 @@ python -m pace_s.descriptors.run_tier0 --config workflows/configs/campaign_LiS.y
     --smiles COCCOC C1COCO1 --workdir data/campaigns/test/tier0 --out data/campaigns/test/tier0_test.csv
 ```
 
-Tres entornos, porque no todo tiene build para Windows ni convive en un solo resolvedor:
+Three environments, because not everything has a Windows build or resolves together:
 
-| Archivo | Dónde | Para qué |
+| File | Where | Purpose |
 |---|---|---|
-| `environment.yml` | laptop y Grace | generación, filtros, sustitutos, AL, análisis, tests |
-| `environment-tier0.yml` | Grace (Linux) | xtb, CREST, morfeus: descriptores de tier 0 |
-| `environment-mlip.yml` | Grace (GPU) | MACE / fairchem (UMA), LAMMPS con plugin: tier 1 y benchmark H2 |
+| `environment.yml` | laptop and Grace | generation, filters, surrogates, AL, analysis, tests |
+| `environment-tier0.yml` | Grace (Linux) | xtb, CREST, morfeus: tier-0 descriptors |
+| `environment-mlip.yml` | Grace (GPU) | MACE / fairchem (UMA), LAMMPS with plugin: tier 1 and the H2 benchmark |
 
-En Grace, LAMMPS con plugin de MACE o DeePMD se compila aparte; pregunta por la ruta que ya resolvió el grupo antes de compilar desde cero.
+On Grace, LAMMPS with the MACE or DeePMD plugin is compiled separately; ask for the route the group already solved before compiling from scratch.
 
-## Reglas de trabajo
+## Working rules
 
-1. **Manifiestos versionados.** Un CSV por campaña en `data/manifests/` con id, SMILES, hash de configuración, ruta en Grace y checksum. Git guarda el índice, Grace guarda los bytes.
-2. **`campaign_id` en cada salida.** Sin esto, tres iteraciones de bucle son irreconstruibles.
-3. **Procedencia en cada número.** Tier y nivel de teoría, siempre. Ningún valor de tier 0 entra al paper.
-4. **Tests desde el primer commit.** SMILES válidos, JSON que valida contra su esquema, moléculas de referencia con valores esperados en tier 0.
-5. **Limitaciones escritas dentro del código.** Nernst-Einstein sobreestima la conductividad; los MLIP no son reactivos; PBE-D3 sobreestima tasas de descomposición hasta 9 órdenes de magnitud (los potenciales de reducción se calculan con funcional híbrido).
+1. **Versioned manifests.** One CSV per campaign in `data/manifests/` with id, SMILES, config hash, Grace path and checksum. Git keeps the index, Grace keeps the bytes.
+2. **`campaign_id` on every output.** Without it, three loop iterations are unreconstructible.
+3. **Provenance on every number.** Tier and level of theory, always. No tier-0 value goes into the paper.
+4. **Tests from the first commit.** Valid SMILES, JSON that validates against its schema, reference molecules with expected tier-0 values.
+5. **Limitations written inside the code.** Nernst-Einstein overestimates conductivity; MLIPs are not reactive; PBE-D3 overestimates decomposition rates by up to nine orders of magnitude (reduction potentials are computed with a hybrid functional).
 
-## Contratos congelados
+## Frozen contracts
 
-- `contracts/kmc_interface.schema.json`: lo que PACE-S entrega al kMC 3D. Los tres campos de `kinetics` son la entrada obligatoria del kMC.
-- `contracts/candidate_table.schema.json`: una fila de la tabla maestra de candidatos.
+- `contracts/kmc_interface.schema.json`: what PACE-S hands to the 3D kMC. The three `kinetics` fields are the kMC's mandatory input.
+- `contracts/candidate_table.schema.json`: one row of the master candidate table.
 
-Cambiar un contrato requiere subir `schema_version` y actualizar el adaptador `src/pace_s/export/kmc3d_adapter.py`, que está fijado a una versión concreta de `kmc3d`.
+Changing a contract requires bumping `schema_version` and updating the adapter `src/pace_s/export/kmc3d_adapter.py`, which is pinned to a specific `kmc3d` version.
 
-## Cambiar de sistema
+## Switching systems
 
-Li-S y Li-SPAN comparten código. Difieren en `workflows/configs/campaign_LiS.yaml` y `campaign_LiSPAN.yaml`: pesos de objetivos (O2 solubilidad de polisulfuros domina en Li-S; O3 pasivación reductiva domina en Li-SPAN).
+Li-S and Li-SPAN share the code. They differ in `workflows/configs/campaign_LiS.yaml` and `campaign_LiSPAN.yaml`: objective weights (O2, polysulfide solubility, dominates in Li-S; O3, reductive passivation, dominates in Li-SPAN).
 
-## Documentos asociados
+## Related documents
 
-Propuesta v2 (`propuesta_pipeline_electrolitos_LiS.md`) y revisión de literatura v2 (`revision_literatura_generacion_electrolitos.md`), en la carpeta padre del proyecto.
+Proposal v2 (`propuesta_pipeline_electrolitos_LiS.md`) and literature review v2 (`revision_literatura_generacion_electrolitos.md`), in the project's parent folder.
 
-## Licencia
+## License
 
-Por definir antes de hacer público el repositorio.
+To be decided before the repository goes public.

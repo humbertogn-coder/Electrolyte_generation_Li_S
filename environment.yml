@@ -1,8 +1,8 @@
-# Entorno principal de PACE-S (laptop Windows/Mac/Linux): generación, filtros,
-# modelos sustitutos, active learning, análisis y tests.
+# Main PACE-S environment (Windows/Mac/Linux laptop): generation, filters,
+# surrogate models, active learning, analysis and tests.
 #
-# Los códigos de cómputo pesado viven en entornos aparte porque no todos tienen
-# build para Windows o chocan entre sí:
+# Heavy compute codes live in separate environments because not all of them
+# have Windows builds or they conflict with each other:
 #   environment-tier0.yml  xtb, CREST, morfeus  (Grace, Linux)
 #   environment-mlip.yml   MACE / fairchem, LAMMPS (Grace, GPU)
 name: pace-s
@@ -11,10 +11,10 @@ channels:
 dependencies:
   - python=3.11
   - pip
-  # química
+  # chemistry
   - rdkit
   - ase
-  # datos y ML
+  # data and ML
   - numpy
   - scipy
   - pandas
@@ -25,9 +25,9 @@ dependencies:
   - botorch
   - gpytorch
   - shap
-  # trayectorias (análisis; la MD corre en el entorno MLIP)
+  # trajectories (analysis only; MD runs in the MLIP environment)
   - mdanalysis
-  # infraestructura
+  # infrastructure
   - jsonschema>=4.18
   - pyyaml
   - pytest

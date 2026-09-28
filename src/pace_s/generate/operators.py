@@ -1,17 +1,18 @@
-"""Operadores enumerativos de la etapa 1 (variación de conocidos).
+"""Stage-1 enumerative operators (variation of known molecules).
 
-Cada operador recibe un SMILES y devuelve el conjunto de hijos canónicos,
-deduplicados y distintos del padre. Son deterministas y auditables: cada hijo
-lleva el nombre del operador y el `candidate_id` del padre en la tabla maestra.
+Each operator takes a SMILES and returns the set of canonical children,
+deduplicated and different from the parent. They are deterministic and
+auditable: every child carries the operator name and the parent's
+`candidate_id` in the master table.
 
-Convenciones comunes a todos:
-- Solo se tocan carbonos sp3 no aromáticos; los operadores no crean cargas,
-  radicales ni enlaces O-O / O-N.
-- Un cambio por hijo. Las variaciones múltiples (p. ej. polifluoración) surgen
-  al aplicar los operadores en rondas sucesivas desde `generate.run`.
-- Los hijos NO pasan por el filtro duro aquí; eso lo hace `filters.hard_filter`
-  en `generate.run`, para que el registro de por qué se descarta algo quede en
-  la tabla.
+Conventions shared by all operators:
+- Only non-aromatic sp3 carbons are touched; operators never create charges,
+  radicals or O-O / O-N bonds.
+- One change per child. Multiple variations (e.g. polyfluorination) emerge by
+  applying the operators over successive rounds from `generate.run`.
+- Children are NOT passed through the hard filter here; `filters.hard_filter`
+  does that in `generate.run`, so the reason a molecule is discarded stays in
+  the table.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from rdkit import Chem
 
 Operator = Callable[[str], set[str]]
 
-# Sustituyentes de `branch`, como SMILES de fragmento con el átomo de anclaje primero.
+# `branch` substituents, as fragment SMILES with the anchor atom first.
 BRANCH_GROUPS = {
     "methyl": "C",
     "ethyl": "CC",
@@ -30,18 +31,18 @@ BRANCH_GROUPS = {
     "trifluoromethyl": "C(F)(F)F",
 }
 
-# Puentes de `bridge_insert`: (símbolo del átomo central, sustituyentes SMILES).
+# `bridge_insert` bridges: (central atom symbol, substituent SMILES).
 BRIDGES = {
     "CF2": ("C", ["F", "F"]),
     "SiMe2": ("Si", ["C", "C"]),
 }
 
-RING_SIZES_TO_CLOSE = (5, 6)  # `ring_close` forma anillos de 5 y 6 miembros
+RING_SIZES_TO_CLOSE = (5, 6)  # `ring_close` forms 5- and 6-membered rings
 MAX_RING_TO_OPEN = 7
 
 
 # ----------------------------------------------------------------------------
-# utilidades
+# helpers
 # ----------------------------------------------------------------------------
 
 
@@ -53,10 +54,10 @@ def _canon(mol: Chem.Mol) -> str | None:
     try:
         Chem.SanitizeMol(mol)
         smi = Chem.MolToSmiles(mol)
-        # segunda pasada: garantiza que el SMILES sea re-parseable y canónico
+        # second pass: guarantees the SMILES is re-parseable and canonical
         m2 = Chem.MolFromSmiles(smi)
         return None if m2 is None else Chem.MolToSmiles(m2)
-    except Exception:  # noqa: BLE001 - RDKit lanza varios tipos
+    except Exception:  # noqa: BLE001 - RDKit raises several types
         return None
 
 
@@ -79,7 +80,7 @@ def _is_sp3_carbon(atom: Chem.Atom) -> bool:
 
 
 def _remove_one_h(rw: Chem.RWMol, idx: int) -> bool:
-    """Quita un H implícito/explícito del átomo `idx`. False si no tiene."""
+    """Remove one implicit/explicit H from atom `idx`. False if it has none."""
     a = rw.GetAtomWithIdx(idx)
     n_h = a.GetTotalNumHs()
     if n_h == 0:
@@ -90,7 +91,7 @@ def _remove_one_h(rw: Chem.RWMol, idx: int) -> bool:
 
 
 def _attach_fragment(mol: Chem.Mol, anchor_idx: int, frag_smiles: str) -> Chem.Mol | None:
-    """Une el primer átomo de `frag_smiles` al átomo `anchor_idx`, consumiendo un H del ancla."""
+    """Bond the first atom of `frag_smiles` to atom `anchor_idx`, consuming one H of the anchor."""
     rw = Chem.RWMol(mol)
     if not _remove_one_h(rw, anchor_idx):
         return None
@@ -102,7 +103,7 @@ def _attach_fragment(mol: Chem.Mol, anchor_idx: int, frag_smiles: str) -> Chem.M
 
 
 def _acyclic_single_bonds(mol: Chem.Mol, symbols: set[str]) -> list[Chem.Bond]:
-    """Enlaces simples, no en anillo, entre átomos cuyos símbolos están en `symbols`."""
+    """Single, non-ring bonds between atoms whose symbols are in `symbols`."""
     out = []
     for b in mol.GetBonds():
         if b.GetBondType() != Chem.BondType.SINGLE or b.IsInRing():
@@ -114,7 +115,7 @@ def _acyclic_single_bonds(mol: Chem.Mol, symbols: set[str]) -> list[Chem.Bond]:
 
 
 def _insert_atom_in_bond(mol: Chem.Mol, bond: Chem.Bond, symbol: str, substituents: list[str]) -> Chem.Mol:
-    """Rompe `bond` e inserta un átomo `symbol` (con sustituyentes) entre sus extremos."""
+    """Break `bond` and insert an atom `symbol` (with substituents) between its ends."""
     rw = Chem.RWMol(mol)
     i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
     rw.RemoveBond(i, j)
@@ -128,12 +129,12 @@ def _insert_atom_in_bond(mol: Chem.Mol, bond: Chem.Bond, symbol: str, substituen
 
 
 # ----------------------------------------------------------------------------
-# operadores
+# operators
 # ----------------------------------------------------------------------------
 
 
 def h_to_f(smiles: str) -> set[str]:
-    """Sustituye un H por F en cada carbono sp3 con hidrógenos (una sustitución por hijo)."""
+    """Replace one H by F on every sp3 carbon bearing hydrogens (one substitution per child)."""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -150,7 +151,7 @@ def h_to_f(smiles: str) -> set[str]:
 
 
 def chain_extend(smiles: str) -> set[str]:
-    """Inserta un -CH2- en cada enlace simple acíclico C-C o C-O."""
+    """Insert a -CH2- into every acyclic single C-C or C-O bond."""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -159,8 +160,8 @@ def chain_extend(smiles: str) -> set[str]:
 
 
 def chain_contract(smiles: str) -> set[str]:
-    """Elimina un -CH2- acíclico (carbono con exactamente dos vecinos pesados, sin
-    sustituyentes) y une sus vecinos. No crea enlaces O-O ni O-N."""
+    """Remove an acyclic -CH2- (carbon with exactly two heavy neighbors and no
+    substituents) and bond its neighbors. Never creates O-O or O-N bonds."""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -170,7 +171,7 @@ def chain_contract(smiles: str) -> set[str]:
             continue
         n1, n2 = (n for n in atom.GetNeighbors())
         if {n1.GetSymbol(), n2.GetSymbol()} <= {"O", "N", "S"}:
-            continue  # evitaría O-O, O-N, etc.
+            continue  # would create O-O, O-N, etc.
         if mol.GetBondBetweenAtoms(n1.GetIdx(), n2.GetIdx()) is not None:
             continue
         rw = Chem.RWMol(mol)
@@ -181,7 +182,7 @@ def chain_contract(smiles: str) -> set[str]:
 
 
 def heteroatom_swap(smiles: str) -> set[str]:
-    """Cambia un oxígeno de éter por S (tioéter) o por N-CH3 (amina terciaria), uno por hijo."""
+    """Swap one ether oxygen for S (thioether) or N-CH3 (tertiary amine), one per child."""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -204,8 +205,8 @@ def heteroatom_swap(smiles: str) -> set[str]:
 
 
 def ring_open(smiles: str) -> set[str]:
-    """Rompe un enlace simple de anillo (C-C o C-O, anillos de hasta 7) y tapa
-    cada extremo con un metilo, dando el análogo acíclico."""
+    """Break one single ring bond (C-C or C-O, rings up to 7) and cap each end
+    with a methyl, giving the acyclic analogue."""
     mol = _mol(smiles)
     if mol is None or mol.GetRingInfo().NumRings() == 0:
         return set()
@@ -231,8 +232,8 @@ def ring_open(smiles: str) -> set[str]:
 
 
 def ring_close(smiles: str) -> set[str]:
-    """Forma un anillo de 5 o 6 miembros enlazando dos carbonos sp3 con H a
-    distancia topológica 4 o 5 (uno por hijo)."""
+    """Form a 5- or 6-membered ring by bonding two H-bearing sp3 carbons at
+    topological distance 4 or 5 (one per child)."""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -258,8 +259,8 @@ def ring_close(smiles: str) -> set[str]:
 
 
 def bridge_insert(smiles: str) -> set[str]:
-    """Inserta un puente -CF2- o -Si(CH3)2- en cada enlace simple acíclico C-C o C-O.
-    (El puente -CH2- es `chain_extend`.)"""
+    """Insert a -CF2- or -Si(CH3)2- bridge into every acyclic single C-C or C-O bond.
+    (The -CH2- bridge is `chain_extend`.)"""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -271,7 +272,7 @@ def bridge_insert(smiles: str) -> set[str]:
 
 
 def branch(smiles: str) -> set[str]:
-    """Añade un sustituyente (metilo, etilo, isopropilo, CF3) a cada carbono sp3 con H."""
+    """Add a substituent (methyl, ethyl, isopropyl, CF3) to every H-bearing sp3 carbon."""
     mol = _mol(smiles)
     if mol is None:
         return set()
@@ -299,5 +300,5 @@ OPERATORS: dict[str, Operator] = {
 
 
 def apply(operators: Iterable[str], smiles: str) -> dict[str, set[str]]:
-    """Aplica una lista de operadores por nombre; devuelve {operador: hijos}."""
+    """Apply a list of operators by name; returns {operator: children}."""
     return {name: OPERATORS[name](smiles) for name in operators}

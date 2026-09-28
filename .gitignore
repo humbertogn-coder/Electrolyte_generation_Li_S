@@ -7,12 +7,12 @@ dist/
 .pytest_cache/
 .ipynb_checkpoints/
 
-# entornos
+# environments
 .venv/
 .pixi/
 .snakemake/
 
-# datos pesados: Git guarda el índice (data/manifests), Grace guarda los bytes
+# heavy data: Git keeps the index (data/manifests), Grace keeps the bytes
 data/raw/
 data/campaigns/
 *.traj
@@ -33,7 +33,7 @@ OUTCAR
 *.model
 *.ckpt
 
-# salidas de xtb / crest
+# xtb / crest outputs
 xtbrestart
 xtbtopo.mol
 charges
@@ -46,7 +46,7 @@ crest.energies
 slurm-*.out
 *.err
 
-# editores y SO
+# editors and OS
 .vscode/
 .idea/
 .DS_Store

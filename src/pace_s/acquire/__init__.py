@@ -1,7 +1,7 @@
-"""M3 (b): adquisición multiobjetivo y gestión del bucle de active learning.
+"""M3 (b): multi-objective acquisition and active-learning loop management.
 
-Adquisición: qNEHVI (BoTorch). Diferencia deliberada frente al Expected
-Improvement de objetivo único de Nat. Commun. 2025; evita pesos arbitrarios.
-Lotes de 60 formulaciones, 3 iteraciones. Iteración 1 sembrada por diversidad
-y por ComBat. La comparación contra selección aleatoria es obligatoria (H4).
+Acquisition: qNEHVI (BoTorch). A deliberate difference from the single-objective
+Expected Improvement of Nat. Commun. 2025; it avoids arbitrary weights.
+Batches of 60 formulations, 3 iterations. Iteration 1 seeded by diversity and
+by ComBat. The comparison against random selection is mandatory (H4).
 """

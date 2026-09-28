@@ -1,7 +1,7 @@
-# Entorno separado para MD con MLIP (tier 1) y benchmark de potenciales (H2).
-# Elegir UNA de las líneas de MLIP según la decisión del hito H2; tenerlas todas
-# instaladas a la vez suele romper la resolución de PyTorch/CUDA.
-# LAMMPS con plugin de MACE o DeePMD se compila aparte en Grace.
+# Separate environment for MLIP molecular dynamics (tier 1) and the potential
+# benchmark (H2). Pick ONE of the MLIP lines according to the H2 decision;
+# installing all of them at once usually breaks the PyTorch/CUDA resolution.
+# LAMMPS with the MACE or DeePMD plugin is compiled separately on Grace.
 name: pace-s-mlip
 channels:
   - conda-forge
@@ -9,7 +9,7 @@ dependencies:
   - python=3.11
   - pip
   - pytorch
-  - pytorch-cuda=12.1   # ajustar a la versión de CUDA de la cola GPU de Grace
+  - pytorch-cuda=12.1   # match the CUDA version of Grace's GPU queue
   - ase
   - numpy
   - mdanalysis
@@ -18,5 +18,5 @@ dependencies:
   - pip:
       - mace-torch          # MACE / MACE-OMol
       - fairchem-core       # UMA / OMol25
-      # - deepmd-kit        # uMLP de electrolitos (Nat. Commun. 2025), ai2-kit
+      # - deepmd-kit        # electrolyte uMLP (Nat. Commun. 2025), ai2-kit
       - solvation-analysis

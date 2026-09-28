@@ -1,4 +1,4 @@
-"""Carga y validación de los contratos JSON congelados en `contracts/`."""
+"""Loading and validation of the JSON contracts frozen in `contracts/`."""
 
 from __future__ import annotations
 
@@ -32,12 +32,12 @@ def validator(name: str) -> Draft202012Validator:
 
 
 def validate(name: str, record: dict[str, Any]) -> None:
-    """Lanza `jsonschema.ValidationError` si `record` no cumple el contrato `name`."""
+    """Raise `jsonschema.ValidationError` if `record` does not satisfy contract `name`."""
     validator(name).validate(record)
 
 
 def errors(name: str, record: dict[str, Any]) -> list[str]:
-    """Lista legible de violaciones; vacía si el registro es válido."""
+    """Readable list of violations; empty if the record is valid."""
     return [
         f"{'/'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}"
         for e in validator(name).iter_errors(record)

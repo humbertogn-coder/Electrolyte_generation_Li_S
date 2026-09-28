@@ -1,4 +1,4 @@
-"""El generador produce una tabla que cumple el contrato, con procedencia por fila."""
+"""The generator produces a table that satisfies the contract, with provenance per row."""
 
 import pandas as pd
 import pytest
@@ -76,7 +76,7 @@ def test_cli_writes_csv(tmp_path):
     rc = main(["--config", "campaign_LiS.yaml", "--out", str(out), "--rounds", "1", "--max-size", "200"])
     assert rc == 0
     df = pd.read_csv(out)
-    # la frontera se submuestrea para no exceder max_size; puede quedar un poco por debajo
+    # the frontier is subsampled so as not to exceed max_size; it may land slightly below
     assert 100 < len(df) <= 200
     assert "canonical_smiles" in df.columns
 
