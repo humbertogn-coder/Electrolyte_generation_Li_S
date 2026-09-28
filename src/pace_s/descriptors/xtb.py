@@ -11,6 +11,7 @@ Output units: energies in Eh unless the name says otherwise (`*_eV`,
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -19,6 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
+
+log = logging.getLogger("pace_s.xtb")
 
 EH_TO_EV = 27.211386245988
 EH_TO_KCAL = 627.5094740631
@@ -57,11 +60,22 @@ _RE_HOMO = re.compile(r"(-?\d+\.\d+)\s+\(HOMO\)")
 _RE_LUMO = re.compile(r"(-?\d+\.\d+)\s+\(LUMO\)")
 _RE_GSOLV = re.compile(r"-> Gsolv\s+(-?\d+\.\d+)\s+Eh")
 _RE_DIPOLE = re.compile(r"molecular dipole:.*?full:\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)", re.S)
+# printed by the ESP routine before it writes the files: max, min, average (Eh)
+_RE_ESP_SUMMARY = re.compile(r"maximum/minimum/av ESP value\s*:\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)")
 
 
-def parse_output(text: str) -> dict:
+def parse_esp_summary(text: str) -> tuple[float, float] | None:
+    """(ESPmin, ESPmax) in kcal/mol from the summary line of `xtb --esp`, or None."""
+    m = _RE_ESP_SUMMARY.findall(text)
+    if not m:
+        return None
+    vmax, vmin, _ = (float(x) for x in m[-1])
+    return vmin * EH_TO_KCAL, vmax * EH_TO_KCAL
+
+
+def parse_output(text: str, require_normal_termination: bool = True) -> dict:
     """Extract the fields of a regular `xtb` run. Takes the last occurrence of each."""
-    if "normal termination of xtb" not in text:
+    if require_normal_termination and "normal termination of xtb" not in text:
         tail = "\n".join(text.strip().splitlines()[-15:])
         raise XtbError(f"xtb did not terminate normally:\n{tail}")
 
@@ -135,7 +149,13 @@ def run_xtb(
     # xtb prints "normal termination" to stderr; both streams are parsed together
     text = proc.stdout + "\n" + proc.stderr
     (workdir / "xtb.out").write_text(text, encoding="utf-8")
-    fields = parse_output(text)
+    # The Windows build of xtb 6.7.1 sometimes exits without "normal termination"
+    # after the ESP routine, although the single point and the ESP itself finished.
+    # For --esp runs the energy is enough to accept the result; the ESP values are
+    # then recovered from xtb_esp.dat or from the summary line below.
+    fields = parse_output(text, require_normal_termination=not esp)
+    if esp and "normal termination of xtb" not in text:
+        log.warning("xtb --esp in %s ended without normal termination; recovering what it wrote", workdir)
 
     res = XtbResult(**fields, workdir=workdir)
     charges_file = workdir / "charges"
@@ -146,10 +166,19 @@ def run_xtb(
     if esp:
         esp_file = workdir / "xtb_esp.dat"
         if esp_file.exists():
-            data = np.loadtxt(esp_file)
-            if data.ndim == 2 and data.shape[1] >= 4:
-                res.esp_min_kcal_mol = float(data[:, 3].min() * EH_TO_KCAL)
-                res.esp_max_kcal_mol = float(data[:, 3].max() * EH_TO_KCAL)
+            try:
+                data = np.loadtxt(esp_file)
+                if data.ndim == 2 and data.shape[1] >= 4 and len(data) > 0:
+                    res.esp_min_kcal_mol = float(data[:, 3].min() * EH_TO_KCAL)
+                    res.esp_max_kcal_mol = float(data[:, 3].max() * EH_TO_KCAL)
+            except ValueError:  # truncated file
+                pass
+        if res.esp_min_kcal_mol is None:
+            summary = parse_esp_summary(text)
+            if summary is not None:
+                res.esp_min_kcal_mol, res.esp_max_kcal_mol = summary
+        if res.esp_min_kcal_mol is None:
+            raise XtbError(f"xtb --esp produced no usable ESP in {workdir}")
     return res
 
 

@@ -155,3 +155,24 @@ def test_tier0_reproduces_donor_order_with_xtb(tmp_path, cfg_lis):
     df = run_block(items, tmp_path / "AL-01" / "tier0", st).rename(columns={"candidate_id": "name"})
     assert df["tier0.error"].isna().all()
     _check_reference_order(df)
+
+
+def test_esp_summary_fallback():
+    """Windows build: `xtb --esp` may end without 'normal termination' after printing
+    the ESP summary. The values are recovered from that line (Eh -> kcal/mol)."""
+    from pace_s.descriptors.xtb import EH_TO_KCAL, parse_esp_summary
+
+    text = (
+        "          | TOTAL ENERGY              -21.778832238544 Eh   |\n"
+        " computing ESP ...\n"
+        "maximum/minimum/av ESP value :    0.029828   -0.064570    0.002736\n"
+    )
+    esp_min, esp_max = parse_esp_summary(text)
+    assert abs(esp_min - (-0.064570 * EH_TO_KCAL)) < 1e-6
+    assert abs(esp_max - (0.029828 * EH_TO_KCAL)) < 1e-6
+    assert parse_esp_summary("nothing here") is None
+    # the single point is still accepted without normal termination when asked to
+    f = parse_output(text, require_normal_termination=False)
+    assert abs(f["energy_eh"] - (-21.778832238544)) < 1e-9
+    with pytest.raises(XtbError):
+        parse_output(text)

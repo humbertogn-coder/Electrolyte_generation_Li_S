@@ -177,11 +177,17 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
         struct = Structure.from_xyz(res.opt_xyz)
         e_mol = res.energy_eh
 
-        # 4. surface ESP
-        esp = run_xtb(res.opt_xyz, workdir / "esp", charge=0, opt=False, gfn=st.gfn, alpb=st.alpb, esp=True,
-                      threads=st.threads, timeout_s=st.timeout_s)
-        out["tier0.esp_min_kcal_mol"] = esp.esp_min_kcal_mol
-        out["tier0.esp_max_kcal_mol"] = esp.esp_max_kcal_mol
+        # 4. surface ESP. A failure here must not prevent the binding scans below;
+        #    the row is flagged in tier0.error but Li+ and Li2S8 are still computed.
+        esp_error = None
+        try:
+            esp = run_xtb(res.opt_xyz, workdir / "esp", charge=0, opt=False, gfn=st.gfn, alpb=st.alpb, esp=True,
+                          threads=st.threads, timeout_s=st.timeout_s)
+            out["tier0.esp_min_kcal_mol"] = esp.esp_min_kcal_mol
+            out["tier0.esp_max_kcal_mol"] = esp.esp_max_kcal_mol
+        except XtbError as e:
+            esp_error = f"esp: {str(e).splitlines()[0][:120]}"
+            log.warning("%s: %s", smiles, esp_error)
 
         # 5 and 6. binding with Li+ and with Li2S8
         refs = reference_energies(str(workdir.parent), st.gfn, st.alpb, st.threads)
@@ -194,7 +200,7 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
             build = lambda s, m, i: place_cluster(s, m, i, cluster, LI2S8_ANCHOR)  # noqa: E731
             e_ps, _ = _binding_scan(struct, mol, sites, build, 0, e_mol, refs["Li2S8"], workdir / "li2s8", st)
             out["tier0.li2s8_binding_eV"] = e_ps
-        out["tier0.error"] = None
+        out["tier0.error"] = esp_error
     except Exception as e:  # noqa: BLE001 - one failed molecule must not kill the block
         log.warning("%s: %s", smiles, e)
         out["tier0.error"] = f"{type(e).__name__}: {str(e)[:200]}"
