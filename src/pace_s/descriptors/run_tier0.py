@@ -179,15 +179,23 @@ def compute_tier0(smiles: str, workdir: str | Path, st: Tier0Settings) -> dict[s
 
         # 4. surface ESP. A failure here must not prevent the binding scans below;
         #    the row is flagged in tier0.error but Li+ and Li2S8 are still computed.
+        #    First attempt with the requested threads; on failure, one retry with a
+        #    single thread (the Windows crash seems to be in the parallel ESP code).
         esp_error = None
-        try:
-            esp = run_xtb(res.opt_xyz, workdir / "esp", charge=0, opt=False, gfn=st.gfn, alpb=st.alpb, esp=True,
-                          threads=st.threads, timeout_s=st.timeout_s)
-            out["tier0.esp_min_kcal_mol"] = esp.esp_min_kcal_mol
-            out["tier0.esp_max_kcal_mol"] = esp.esp_max_kcal_mol
-        except XtbError as e:
-            esp_error = f"esp: {str(e).splitlines()[0][:120]}"
-            log.warning("%s: %s", smiles, esp_error)
+        for attempt, (sub, threads) in enumerate((("esp", st.threads), ("esp_retry", 1))):
+            try:
+                esp = run_xtb(res.opt_xyz, workdir / sub, charge=0, opt=False, gfn=st.gfn, alpb=st.alpb,
+                              esp=True, threads=threads, timeout_s=st.timeout_s)
+                out["tier0.esp_min_kcal_mol"] = esp.esp_min_kcal_mol
+                out["tier0.esp_max_kcal_mol"] = esp.esp_max_kcal_mol
+                esp_error = None
+                if attempt:
+                    log.info("%s: ESP recovered on the single-thread retry", smiles)
+                break
+            except XtbError as e:
+                esp_error = f"esp: {str(e).splitlines()[0][:120]}"
+        if esp_error:
+            log.warning("%s: %s (after retry)", smiles, esp_error)
 
         # 5 and 6. binding with Li+ and with Li2S8
         refs = reference_energies(str(workdir.parent), st.gfn, st.alpb, st.threads)

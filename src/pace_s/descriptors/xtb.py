@@ -41,7 +41,7 @@ def find_crest() -> str | None:
 
 @dataclass
 class XtbResult:
-    energy_eh: float
+    energy_eh: float | None
     homo_eV: float | None = None
     lumo_eV: float | None = None
     gap_eV: float | None = None
@@ -73,7 +73,7 @@ def parse_esp_summary(text: str) -> tuple[float, float] | None:
     return vmin * EH_TO_KCAL, vmax * EH_TO_KCAL
 
 
-def parse_output(text: str, require_normal_termination: bool = True) -> dict:
+def parse_output(text: str, require_normal_termination: bool = True, require_energy: bool = True) -> dict:
     """Extract the fields of a regular `xtb` run. Takes the last occurrence of each."""
     if require_normal_termination and "normal termination of xtb" not in text:
         tail = "\n".join(text.strip().splitlines()[-15:])
@@ -87,7 +87,7 @@ def parse_output(text: str, require_normal_termination: bool = True) -> dict:
         return cast(v[group - 1] if isinstance(v, tuple) else v)
 
     energy = last(_RE_ENERGY)
-    if energy is None:
+    if energy is None and require_energy:
         raise XtbError("no TOTAL ENERGY in the xtb output")
     return {
         "energy_eh": energy,
@@ -149,13 +149,14 @@ def run_xtb(
     # xtb prints "normal termination" to stderr; both streams are parsed together
     text = proc.stdout + "\n" + proc.stderr
     (workdir / "xtb.out").write_text(text, encoding="utf-8")
-    # The Windows build of xtb 6.7.1 sometimes exits without "normal termination"
-    # after the ESP routine, although the single point and the ESP itself finished.
-    # For --esp runs the energy is enough to accept the result; the ESP values are
-    # then recovered from xtb_esp.dat or from the summary line below.
-    fields = parse_output(text, require_normal_termination=not esp)
+    # The Windows build of xtb 6.7.1 sometimes crashes inside the ESP routine,
+    # i.e. before the final TOTAL ENERGY block and "normal termination". For an
+    # --esp run only the ESP matters (the energy comes from the optimization run),
+    # so the result is accepted if the ESP can be recovered from xtb_esp.dat or
+    # from the summary line the routine prints; otherwise XtbError is raised below.
+    fields = parse_output(text, require_normal_termination=not esp, require_energy=not esp)
     if esp and "normal termination of xtb" not in text:
-        log.warning("xtb --esp in %s ended without normal termination; recovering what it wrote", workdir)
+        log.debug("xtb --esp in %s ended without normal termination; recovering what it wrote", workdir)
 
     res = XtbResult(**fields, workdir=workdir)
     charges_file = workdir / "charges"

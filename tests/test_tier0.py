@@ -171,8 +171,14 @@ def test_esp_summary_fallback():
     assert abs(esp_min - (-0.064570 * EH_TO_KCAL)) < 1e-6
     assert abs(esp_max - (0.029828 * EH_TO_KCAL)) < 1e-6
     assert parse_esp_summary("nothing here") is None
-    # the single point is still accepted without normal termination when asked to
+    # the run is still accepted without normal termination when asked to
     f = parse_output(text, require_normal_termination=False)
     assert abs(f["energy_eh"] - (-21.778832238544)) < 1e-9
     with pytest.raises(XtbError):
         parse_output(text)
+    # a crash inside the ESP routine leaves no TOTAL ENERGY at all
+    crashed = " computing ESP ...\nmaximum/minimum/av ESP value :    0.02   -0.06    0.00\n"
+    f = parse_output(crashed, require_normal_termination=False, require_energy=False)
+    assert f["energy_eh"] is None
+    with pytest.raises(XtbError):
+        parse_output(crashed, require_normal_termination=False)
