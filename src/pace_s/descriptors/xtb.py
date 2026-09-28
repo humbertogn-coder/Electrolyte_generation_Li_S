@@ -126,7 +126,10 @@ def run_xtb(
     n = threads or int(env.get("OMP_NUM_THREADS", "1"))
     env.update({"OMP_NUM_THREADS": str(n), "MKL_NUM_THREADS": str(n), "OMP_STACKSIZE": env.get("OMP_STACKSIZE", "1G")})
     try:
-        proc = subprocess.run(cmd, cwd=workdir, env=env, capture_output=True, text=True, timeout=timeout_s)
+        # encoding explícito: en Windows el defecto es cp1252 y la salida de xtb
+        # trae bytes que esa codificación no puede decodificar
+        proc = subprocess.run(cmd, cwd=workdir, env=env, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=timeout_s)
     except subprocess.TimeoutExpired as e:
         raise XtbError(f"xtb excedió {timeout_s} s en {workdir}") from e
     # xtb escribe "normal termination" en stderr; se parsea todo junto
@@ -182,7 +185,8 @@ def run_crest(
     n = threads or int(env.get("OMP_NUM_THREADS", "1"))
     cmd += ["-T", str(n)]
     env.update({"OMP_NUM_THREADS": str(n), "OMP_STACKSIZE": env.get("OMP_STACKSIZE", "1G")})
-    proc = subprocess.run(cmd, cwd=workdir, env=env, capture_output=True, text=True, timeout=timeout_s)
+    proc = subprocess.run(cmd, cwd=workdir, env=env, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=timeout_s)
     (workdir / "crest.out").write_text(proc.stdout + "\n" + proc.stderr, encoding="utf-8")
     best = workdir / "crest_best.xyz"
     if not best.exists():
