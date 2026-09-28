@@ -11,7 +11,7 @@ OUT = f"data/campaigns/{CAMPAIGN}"
 
 rule all:
     input:
-        f"{OUT}/tier0/tier0_all.csv",
+        f"{OUT}/candidates_tier0.csv",
 
 
 rule generate:
@@ -27,9 +27,20 @@ rule tier0:
     input:
         f"{OUT}/candidates_stage1.parquet",
     output:
-        f"{OUT}/tier0/tier0_all.csv",
+        f"{OUT}/tier0/tier0_000000.csv",
     shell:
-        # on Grace this step is launched as a job array (workflows/slurm/tier0_xtb_array.sbatch);
-        # this is the sequential version for small tests
+        # on Grace this step is launched as a job array (workflows/slurm/tier0_xtb_array.sbatch)
+        # that writes one tier0_<start>.csv per block; this is the sequential version for small tests
         "python -m pace_s.descriptors.run_tier0 --config {workflow.configfiles[0]} "
         "--candidates {input} --workdir $SCRATCH/pace-s/{CAMPAIGN}/tier0 --out {output}"
+
+
+rule merge_tier0:
+    input:
+        candidates=f"{OUT}/candidates_stage1.parquet",
+        first_block=f"{OUT}/tier0/tier0_000000.csv",
+    output:
+        f"{OUT}/candidates_tier0.csv",
+    shell:
+        "python -m pace_s.descriptors.merge_tier0 --candidates {input.candidates} "
+        f"--blocks {OUT}/tier0 --out {{output}}"

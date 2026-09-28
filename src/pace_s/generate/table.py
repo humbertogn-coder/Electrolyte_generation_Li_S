@@ -5,6 +5,7 @@ their flattened form with dot-separated columns (`generation.stage`, `filters.sa
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -12,6 +13,22 @@ import pandas as pd
 from pace_s.contracts import errors
 
 SCHEMA_VERSION = "1.0.0"
+
+# Columns that must stay strings when reading CSV: pandas would otherwise turn
+# a commit hash like "0000000" or "1234567" into an integer.
+STRING_COLUMNS = [
+    "schema_version", "candidate_id", "smiles", "canonical_smiles", "inchikey", "role", "status",
+    "campaign_id", "commit", "generation.parent_id", "generation.operator", "filters.hard_fail_reason",
+    "tier0.method", "tier0.error", "tier1.electrolyte_id", "tier1.mlip", "tier2.level_of_theory",
+]
+
+
+def read_table(path: str | Path) -> pd.DataFrame:
+    """Read a candidate table (CSV or parquet) with the string columns typed correctly."""
+    path = Path(path)
+    if path.suffix == ".parquet":
+        return pd.read_parquet(path)
+    return pd.read_csv(path, dtype={c: str for c in STRING_COLUMNS})
 
 
 def candidate_id(n: int) -> str:

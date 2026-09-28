@@ -58,6 +58,16 @@ python -m pace_s.descriptors.run_tier0 --config workflows/configs/campaign_LiS.y
     --smiles COCCOC C1COCO1 --workdir data/campaigns/test/tier0 --out data/campaigns/test/tier0_test.csv
 ```
 
+The full tier-0 campaign runs as a SLURM job array on Grace and is merged back into the candidate table afterwards:
+
+```bash
+python -m pace_s.generate.run --config workflows/configs/campaign_LiS.yaml --out data/campaigns/AL-01/candidates_stage1.csv
+sbatch --array=0-1199%200 workflows/slurm/tier0_xtb_array.sbatch data/campaigns/AL-01/candidates_stage1.csv
+python -m pace_s.descriptors.merge_tier0 --candidates data/campaigns/AL-01/candidates_stage1.csv \
+    --blocks data/campaigns/AL-01/tier0 --out data/campaigns/AL-01/candidates_tier0.csv
+# candidates_tier0.missing.csv lists what still needs tier 0; feed it back to the job array
+```
+
 Three environments, because not everything has a Windows build or resolves together:
 
 | File | Where | Purpose |

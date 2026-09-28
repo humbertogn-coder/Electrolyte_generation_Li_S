@@ -56,6 +56,7 @@ from pace_s.descriptors.geometry import (
 from pace_s.descriptors.rdkit_descriptors import rdkit_descriptors
 from pace_s.descriptors.xtb import EH_TO_EV, EH_TO_KCAL, XtbError, find_crest, find_xtb, run_crest, run_xtb
 from pace_s.generate.filters import canonical
+from pace_s.generate.table import read_table
 
 log = logging.getLogger("pace_s.tier0")
 
@@ -254,8 +255,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.smiles:
         items = [(f"ADHOC-{i:04d}", s) for i, s in enumerate(args.smiles)]
     else:
-        path = Path(args.candidates)
-        df = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
+        df = read_table(args.candidates)
         if args.only_passing and "status" in df.columns:
             df = df[df["status"] == "generated"]
         df = df.iloc[args.start : (args.start + args.n) if args.n else None]
