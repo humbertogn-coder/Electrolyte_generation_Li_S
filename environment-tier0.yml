@@ -26,4 +26,6 @@ dependencies:
   - snakemake-minimal   # orchestration; no Windows build, hence it lives here
   - pip:
       - morfeus-ml
+      - plotly
+      - opencosmorspy @ git+https://github.com/TUHH-TVT/openCOSMO-RS_py
       - -e .

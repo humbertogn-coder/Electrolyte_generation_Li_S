@@ -10,3 +10,6 @@ jsonschema>=4.18
 rdkit
 scipy
 pytest
+# COSMO-RS oracle (pace_s.oracles.cosmors): openCOSMO-RS activity coefficients
+plotly
+opencosmorspy @ git+https://github.com/TUHH-TVT/openCOSMO-RS_py

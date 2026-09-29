@@ -26,7 +26,7 @@ contracts/          frozen JSON schemas (week 0) and examples
 src/pace_s/
   generate/         seeds, mutation operators, hard and synthesizability filters
   descriptors/      tier 0: xtb, CREST, morfeus, RDKit
-  oracles/          tier 1 MLIP-MD, tier 2 DFT, tier 3 AIMD
+  oracles/          cosmors (COSMO-RS solubility, ORCA + openCOSMO-RS), tier 1 MLIP-MD, tier 2 DFT, tier 3 AIMD
   surrogate/        surrogate models with uncertainty
   acquire/          qNEHVI (BoTorch), loop management
   analysis/         SHAP, Pareto, figures
@@ -36,7 +36,8 @@ workflows/
   configs/          one YAML per campaign; Li-S vs Li-SPAN weights live here
 data/
   manifests/        per-campaign indices and checksums (NO trajectories)
-  reference/        Joule 2021 Table 1, ComBat, reference molecules
+  reference/        Joule 2021 Table 1, Sci. Rep. 2023 list, reference molecules
+third_party/        vendored openCOSMO-RS conformer pipeline (LGPL-3.0, see its NOTICE.md)
 tests/
 notebooks/
 ```
@@ -86,6 +87,19 @@ Three environments, because not everything has a Windows build or resolves toget
 | `environment-mlip.yml` | Grace (GPU) | MACE / fairchem (UMA), LAMMPS with plugin: tier 1 and the H2 benchmark |
 
 On Grace, LAMMPS with the MACE or DeePMD plugin is compiled separately; ask for the route the group already solved before compiling from scratch.
+
+### COSMO-RS solubility oracle (ORCA 6.1 + openCOSMO-RS)
+
+The H3 gate showed that no tier-0 descriptor ranks the measured Li2S8 solubility. `pace_s.oracles.cosmors` reproduces the COSMO-RS route of *Sci. Rep.* 2023 with open software, to build the group's own calibration set:
+
+```
+python -m pace_s.oracles.cosmors prepare --set gate --out data/campaigns/cosmors/gate     # 21 molecules
+sbatch workflows/slurm/cosmors_orca_serial.sbatch data/campaigns/cosmors/gate/structures.inp   # Grace
+python -m pace_s.oracles.cosmors evaluate --root data/campaigns/cosmors/gate/runs \
+    --structures data/campaigns/cosmors/gate/structures.csv --out data/campaigns/cosmors/gate/gate_h3_cosmors.csv
+```
+
+`--set known` adds the seeds and the Sci. Rep. 2023 solvents (81 molecules). The Grace venv needs `pip install plotly "opencosmorspy @ git+https://github.com/TUHH-TVT/openCOSMO-RS_py"` and `module load ORCA/6.1.1-avx2`.
 
 ## Working rules
 
