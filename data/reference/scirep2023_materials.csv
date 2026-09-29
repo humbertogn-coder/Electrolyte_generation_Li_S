@@ -1,0 +1,78 @@
+name,role,attention_to_DME,note
+methylsulfonylmethane,solvent,0.232,
+"1,1,3,3-tetramethylurea",solvent,0.2104,
+"1,1,1,2,2,3,3,4,4-nonafluoro-4-(1,1,2,2,3,3,4,4,4-nonafluorobutoxy)butane",solvent,0.111,
+"N,N-dimethylnitrous amide",solvent,0.192,
+"1,1,1,3,3,3-hexafluoro-2-methoxypropane",solvent,0.192,
+trimethyl phosphate,solvent,0.259,
+1-methoxyhexane,solvent,0.177,
+1-methylimidazole,solvent,0.292,
+4-methoxypyridine,solvent,0.177,
+piperidine-1-carbaldehyde,solvent,0.269,
+pyridine,solvent,0.196,
+4-methylpyridine,solvent,0.181,
+oxolan-2-one,solvent,0.232,gamma-butyrolactone
+"3,4-dimethylpyridine",solvent,0.174,
+1-ethoxy-2-methoxyethane,solvent,0.192,
+"3-methyl-1,3-oxazolidin-2-one",solvent,0.265,
+3-methylpyridine,solvent,0.193,
+"N,N-dimethylbutanamide",solvent,0.239,
+butanedial,solvent,0.235,
+"3,5-dimethylpyridine",solvent,0.138,
+"2,4-dimethoxypyrimidine",solvent,0.183,
+dimethyl carbonate,solvent,0.270,
+hexanedinitrile,solvent,0.252,
+ethoxyethane,solvent,0.217,diethyl ether
+1-propoxypropane,solvent,0.232,
+"1,1,2,2,3,3,4,4-octafluoro-5-(1,1,2,2-tetrafluoroethoxy)pentane",solvent,0.227,OFE
+"N,N-dimethylacetamide",solvent,0.237,
+"1,3-dimethylimidazolidin-2-one",solvent,0.222,DMI
+pyridazine,solvent,0.284,
+"1,3-dioxolane",solvent,0.214,DOL
+"N,N-diethylformamide",solvent,0.258,
+methyl prop-2-enoate,solvent,0.232,
+"1,1,2,2,3,3,4,4,5,5,6-undecafluoro-6-(trifluoromethyl)cyclohexane",solvent,0.124,
+diethyl carbonate,solvent,0.233,
+methylsulfinylmethane,solvent,0.273,DMSO
+methyl 2-methylpropanoate,solvent,0.230,
+"methyl 2,2,3,3,4,4,4-heptafluorobutanoate",solvent,0.215,
+methyl propanoate,solvent,0.244,
+methyl 3-methylbut-2-enoate,solvent,0.262,
+"1,3-dioxolan-2-one",solvent,0.242,ethylene carbonate
+2H-furan-5-one,solvent,0.260,
+cyclohex-2-en-1-one,solvent,0.216,
+"1,1,1,2,2,3,3,4,4,5,5,6,6,7,7,7-hexadecafluoroheptane",solvent,0.110,
+morpholine-4-carbaldehyde,solvent,0.273,
+4-ethylpyridine,solvent,0.169,
+N-[bis(dimethylamino)phosphoryl]-N-methylmethanamine,solvent,0.264,HMPA
+acetonitrile,solvent,0.244,
+"thiolane 1,1-dioxide",solvent,0.229,sulfolane
+2-methyloxolane,solvent,0.204,2-MeTHF
+1-piperidin-1-ylethanone,solvent,0.263,
+2-ethoxy-2-methylpropane,solvent,0.2037,ETBE
+methyl but-2-enoate,solvent,0.231,
+thiolane 1-oxide,solvent,0.274,
+"4-fluoro-1,3-dioxolan-2-one",solvent,0.311,FEC
+"1,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,8-octadecafluorooctane",solvent,0.122,
+"1,1,2,2,2-pentafluoro-N,N-bis(1,1,2,2,2-pentafluoroethyl)ethanamine",solvent,0.119,
+pentanedinitrile,solvent,0.263,
+pyrimidine,solvent,0.2034,
+methyl 2-methylprop-2-enoate,solvent,0.231,
+ethyl methyl carbonate,solvent,0.254,
+"1,2-dimethoxyethane",solvent,0.154,DME
+2-methoxy-2-methylpropane,solvent,0.232,MTBE
+2-propan-2-yloxypropane,solvent,0.177,diisopropyl ether
+"3-methylthiolane 1,1-dioxide",solvent,0.2019,
+"N,N-dimethylpropanamide",solvent,0.2369,
+1-butoxybutane,solvent,0.152,dibutyl ether
+methyl 2-cyanoacetate,solvent,0.262,
+methyl 3-oxobutanoate,solvent,0.211,
+"N,N-dimethylformamide",solvent,,DMF; score not listed in Table S1
+"1,1,2,2-tetrafluoro-1-(2,2,2-trifluoroethoxy)ethane",anti_solvent,0.214,
+"1,1,2,2-tetrafluoro-3-(1,1,2,2-tetrafluoroethoxy)propane",anti_solvent,0.215,TTE
+2-methylfuran,anti_solvent,0.133,
+"1,1,1-trifluoro-2-(2,2,2-trifluoroethoxy)ethane",anti_solvent,0.170,
+1-ethoxypropane,anti_solvent,0.125,
+"lithium;bis(trifluoromethylsulfonyl)azanide",salt,0.171,LiTFSI
+"lithium;bis(fluorosulfonyl)azanide",salt,0.160,LiFSI
+lithium;nitrate,additive,0.124,LiNO3
