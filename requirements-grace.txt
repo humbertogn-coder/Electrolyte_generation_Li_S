@@ -8,4 +8,5 @@ pyarrow
 pyyaml
 jsonschema>=4.18
 rdkit
+scipy
 pytest

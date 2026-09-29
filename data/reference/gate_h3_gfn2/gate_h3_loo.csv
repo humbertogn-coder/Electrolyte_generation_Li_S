@@ -1,0 +1,7 @@
+columns,n,loo_spearman,p_value,loo_rmse_log10
+tier0.li2s8_binding_eV|min,14,0.119,0.6855,0.456
+tier0.esp_min_kcal_mol|mean,14,0.515,0.0592,0.359
+tier0.esp_min_kcal_mol|mean + tier0.dipole_D|mean,14,0.458,0.0995,0.38
+tier0.esp_min_kcal_mol|mean + tier0.ratio_C_O|mean,14,0.546,0.0433,0.363
+tier0.esp_min_kcal_mol|mean + tier0.li2s8_binding_eV|min,14,0.482,0.0807,0.373
+tier0.esp_min_kcal_mol|mean + tier0.dipole_D|mean + tier0.li2s8_binding_eV|min,14,0.458,0.0995,0.404
