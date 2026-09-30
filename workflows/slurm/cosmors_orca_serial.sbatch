@@ -16,8 +16,7 @@
 #       --structures data/campaigns/cosmors/gate/structures.csv --out data/campaigns/cosmors/gate/gate_h3_cosmors.csv
 #
 # Requirements on Grace (once):
-#   module load ORCA/6.1.1-avx2   -> check with `module spider ORCA/6.1.1-avx2` which
-#                                    modules it needs (usually a GCC + OpenMPI pair)
+#   module load GCC/13.2.0 OpenMPI/4.1.8 ORCA/6.1.1-avx2   (from `module spider ORCA/6.1.1-avx2`)
 #   pip install plotly "opencosmorspy @ git+https://github.com/TUHH-TVT/openCOSMO-RS_py"
 #
 # Cost (rough, 8 cores): 10-40 min per solvent molecule (5-20 heavy atoms), longer
@@ -51,6 +50,7 @@ module load GCC/13.2.0
 module load Python/3.11.5
 module load xtb/6.7.1
 module load FlexiBLAS/3.3.1
+module load OpenMPI/4.1.8            # required by ORCA/6.1.1-avx2 (module spider)
 module load ORCA/6.1.1-avx2
 source /scratch/user/$USER/pace_env/bin/activate
 
