@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/balbuena-group/pace-s/contracts/selection_record.schema.json",
+  "title": "PACE-S selection record",
+  "description": "One job proposed by the active-learning loop (or by a baseline policy), written BEFORE the job runs: who selected what, with which model and data, why, and at what estimated cost. Never reconstructed afterwards. Introduced in PACE-S 2.0; additive changes only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "selection_id",
+    "campaign_id",
+    "candidate_id",
+    "cluster_protocol",
+    "method",
+    "policy",
+    "acquisition_score",
+    "estimated_cost",
+    "model_version",
+    "train_data_hash",
+    "reason",
+    "selected_at_iteration",
+    "state",
+    "seed",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "selection_id": { "type": "string", "pattern": "^PSL-[0-9]{6}$" },
+    "campaign_id": { "type": "string", "minLength": 1 },
+    "candidate_id": { "type": "string", "pattern": "^PSM-[0-9]{6}$" },
+    "cluster_protocol": {
+      "type": "string",
+      "enum": ["li_s1", "li_s2", "li_fsi", "li_fsi_s1", "li_sat", "li_fsi_sat", "exchange_n2", "exchange_sat"]
+    },
+    "method": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Level of the proposed job, e.g. 'GFN2-xTB/ALPB(ether)', 'CREST/GFN2-xTB', 'wB97X-D3/def2-TZVPD/CPCM'."
+    },
+    "policy": {
+      "type": "string",
+      "enum": ["uncertainty_diversity_cost", "uncertainty", "diversity", "random", "initial_design", "manual"],
+      "description": "Which policy produced the proposal; random and diversity are the mandatory baselines."
+    },
+    "acquisition_score": { "type": ["number", "null"], "description": "null for random/manual." },
+    "estimated_cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0 },
+        "unit": { "type": "string", "enum": ["cpu_h", "gpu_h", "s"] }
+      }
+    },
+    "model_version": { "type": ["string", "null"], "description": "null before any model exists (initial design)." },
+    "train_data_hash": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "reason": { "type": "string", "minLength": 1 },
+    "selected_at_iteration": { "type": "integer", "minimum": 0 },
+    "state": {
+      "type": "string",
+      "enum": ["proposed", "submitted", "running", "succeeded", "failed", "skipped", "cancelled"]
+    },
+    "seed": { "type": "integer" },
+    "calculation_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^PCC-[0-9]{6}$" },
+      "uniqueItems": true
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

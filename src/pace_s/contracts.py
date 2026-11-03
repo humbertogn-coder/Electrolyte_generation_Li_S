@@ -14,6 +14,10 @@ from pace_s import CONTRACTS_DIR
 SCHEMAS = {
     "kmc_interface": CONTRACTS_DIR / "kmc_interface.schema.json",
     "candidate_table": CONTRACTS_DIR / "candidate_table.schema.json",
+    # PACE-S 2.0 (Tier 0.5 and active learning); see docs/adr/0001-solvation-al-v2.md
+    "cluster_record": CONTRACTS_DIR / "cluster_record.schema.json",
+    "calculation_record": CONTRACTS_DIR / "calculation_record.schema.json",
+    "selection_record": CONTRACTS_DIR / "selection_record.schema.json",
 }
 
 

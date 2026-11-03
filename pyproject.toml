@@ -30,4 +30,8 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q -m 'not slow'"
-markers = ["slow: tests that recompute with xtb (minutes); run with -m slow"]
+markers = [
+  "slow: tests that recompute with xtb (minutes); run with -m slow",
+  "external: needs an external program (xtb, crest, orca) on PATH",
+  "hpc: only meaningful on Grace (SLURM, modules)",
+]

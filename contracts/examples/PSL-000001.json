@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "selection_id": "PSL-000001",
+  "campaign_id": "SPV2-01",
+  "candidate_id": "PSM-000001",
+  "cluster_protocol": "exchange_n2",
+  "method": "GFN2-xTB/ALPB(ether)",
+  "policy": "initial_design",
+  "acquisition_score": null,
+  "estimated_cost": {
+    "value": 0.05,
+    "unit": "cpu_h"
+  },
+  "model_version": null,
+  "train_data_hash": null,
+  "reason": "Reference solvent (DME) in the initial design; no model trained yet.",
+  "selected_at_iteration": 0,
+  "state": "proposed",
+  "seed": 20261031,
+  "created_at": "2026-11-03T00:00:00Z"
+}
