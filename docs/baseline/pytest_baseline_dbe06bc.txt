@@ -1,0 +1,20 @@
+commit: dbe06bc6b6993d6cca2277619a655c2df67c5b74
+date: 2026-11-03T21:22:25Z
+python: Python 3.10.12
+rdkit 2026.03.6
+jsonschema 4.26.0
+scipy 1.15.3
+pandas 2.3.3
+numpy 2.2.6
+pyyaml 6.0.3
+pytest 9.1.1
+xtb: not on PATH (device VM)
+
+command: PYTHONPATH=src python3 -m pytest -p no:cacheprovider -rs
+.........................ss............................................. [ 73%]
+.......................s..                                               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_cosmors.py:72: opencosmorspy not installed
+SKIPPED [1] tests/test_cosmors.py:80: opencosmorspy not installed
+SKIPPED [1] tests/test_tier0.py:130: xtb is not installed
+95 passed, 3 skipped, 1 deselected in 11.10s
