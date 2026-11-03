@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/balbuena-group/pace-s/contracts/cluster_record.schema.json",
+  "title": "PACE-S cluster record",
+  "description": "One explicit solvation cluster (Tier 0.5): a stoichiometry plus one placement variant (pose). Charge, multiplicity and formula are derived from the species by pace_s.solvation.species, never typed by hand. Distinct from molecules (PSM-), calculations (PCC-) and formulations (PACES-). Introduced in PACE-S 2.0; additive changes only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "cluster_id",
+    "campaign_id",
+    "protocol",
+    "composition_label",
+    "species",
+    "net_charge",
+    "multiplicity",
+    "formula",
+    "generation_seed",
+    "status"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "cluster_id": { "type": "string", "pattern": "^PSC-[0-9]{6}$" },
+    "campaign_id": { "type": "string", "minLength": 1 },
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "isolated_solvent",
+        "isolated_li",
+        "isolated_fsi",
+        "li_s1",
+        "li_s2",
+        "li_fsi",
+        "li_fsi_s1",
+        "li_sat",
+        "li_fsi_sat"
+      ],
+      "description": "Cluster family. isolated_* are the reference species of the reactions; *_sat give Li+ about four donor atoms (number of solvent molecules depends on the solvent)."
+    },
+    "composition_label": {
+      "type": "string",
+      "pattern": "^([^()\\s]+\\([0-9]+\\))+$",
+      "description": "Deterministic key, e.g. 'Li+(1)FSI-(1)DME(1)'; the same label is used to look up energies in reactions."
+    },
+    "species": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "name", "smiles", "molecule_id", "count", "charge"],
+        "properties": {
+          "role": { "type": "string", "enum": ["li_cation", "anion", "solvent", "diluent"] },
+          "name": { "type": "string", "minLength": 1 },
+          "smiles": { "type": "string", "minLength": 1 },
+          "molecule_id": {
+            "type": ["string", "null"],
+            "pattern": "^PSM-[0-9]{6}$",
+            "description": "Candidate-table id for solvents/diluents; null for Li+ and FSI-."
+          },
+          "count": { "type": "integer", "minimum": 1 },
+          "charge": { "type": "integer" }
+        }
+      }
+    },
+    "net_charge": { "type": "integer" },
+    "multiplicity": { "type": "integer", "minimum": 1 },
+    "formula": { "type": "string", "pattern": "^([A-Z][a-z]?[0-9]*)+$" },
+    "n_donor_atoms_offered": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Donor atoms (O, amine N, thioether S) of the neutral ligands, by the heuristic in species.donor_atoms; the coordination actually reached is measured after optimization."
+    },
+    "pose_index": { "type": "integer", "minimum": 0 },
+    "geometry_id": { "type": ["string", "null"] },
+    "generation_seed": { "type": "integer" },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "built", "optimized", "failed", "flagged_reactive", "excluded"],
+      "description": "flagged_reactive: connectivity changed during optimization (decomposition, proton transfer, fragment loss); such clusters are never used as intact solvation minima."
+    },
+    "notes": { "type": "string" }
+  }
+}

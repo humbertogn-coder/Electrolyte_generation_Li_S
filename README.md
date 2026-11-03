@@ -101,6 +101,22 @@ python -m pace_s.oracles.cosmors evaluate --root data/campaigns/cosmors/gate/run
 
 `--set known` adds the seeds and the Sci. Rep. 2023 solvents (81 molecules). The Grace venv needs `pip install plotly "opencosmorspy @ git+https://github.com/TUHH-TVT/openCOSMO-RS_py"` and `module load ORCA/6.1.1-avx2`.
 
+## PACE-S 2.0 (in progress, branch `feature/solvation-al-v2`)
+
+Li-SPAN becomes the primary system of a new campaign (`SPV2-01`). A Tier 0.5 of
+explicit solvation clusters ([Li(S)]+, [Li(S)2]+, [Li(FSI)], [Li(FSI)(S)] and
+coordination-saturated variants) provides a quantum-chemical label, the
+ligand-exchange energy [Li(S)n]+ + FSI- -> [Li(FSI)(S)(n-1)] + S, for surrogate
+models and an active-learning loop benchmarked against random and diversity
+selection. Decisions and physical rules: `docs/adr/0001-solvation-al-v2.md`.
+
+Implemented so far: `pace_s.solvation.species` (species, charges, multiplicity,
+stoichiometry, donor atoms, cluster protocols), `pace_s.solvation.reactions`
+(balanced reactions, reaction energies that refuse missing or mixed-level
+terms), `pace_s.provenance` (stable input hashes), and the versioned contracts
+`cluster_record`, `calculation_record`, `selection_record` (v1 contracts are
+unchanged and pinned by hash in the tests).
+
 ## Working rules
 
 1. **Versioned manifests.** One CSV per campaign in `data/manifests/` with id, SMILES, config hash, Grace path and checksum. Git keeps the index, Grace keeps the bytes.

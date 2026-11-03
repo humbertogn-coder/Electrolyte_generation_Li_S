@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "calculation_id": "PCC-000311",
+  "cluster_id": "PSC-000101",
+  "campaign_id": "SPV2-01",
+  "method": "GFN2-xTB",
+  "program": {
+    "name": "xtb"
+  },
+  "solvation_model": "ALPB",
+  "solvation_reference": "ether",
+  "geometry_type": "xtb_optimized",
+  "energy_kind": "electronic_total",
+  "energy_eh": null,
+  "charge": 1,
+  "multiplicity": 1,
+  "success": false,
+  "error_code": "NOT_EXECUTED",
+  "input_hash": null,
+  "runtime_s": null,
+  "error_message": "Example of a planned calculation that has not run: no energy is stored."
+}

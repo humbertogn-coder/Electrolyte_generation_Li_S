@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "cluster_id": "PSC-000101",
+  "campaign_id": "SPV2-01",
+  "protocol": "li_s2",
+  "composition_label": "Li+(1)DME(2)",
+  "species": [
+    {
+      "role": "li_cation",
+      "name": "Li+",
+      "smiles": "[Li+]",
+      "molecule_id": null,
+      "count": 1,
+      "charge": 1
+    },
+    {
+      "role": "solvent",
+      "name": "DME",
+      "smiles": "COCCOC",
+      "molecule_id": "PSM-000001",
+      "count": 2,
+      "charge": 0
+    }
+  ],
+  "net_charge": 1,
+  "multiplicity": 1,
+  "formula": "C8H20LiO4",
+  "n_donor_atoms_offered": 4,
+  "generation_seed": 20261031,
+  "status": "proposed",
+  "pose_index": 0,
+  "geometry_id": "geo-000101-a"
+}

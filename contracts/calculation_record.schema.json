@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/balbuena-group/pace-s/contracts/calculation_record.schema.json",
+  "title": "PACE-S calculation record",
+  "description": "One quantum-chemical calculation on one cluster geometry: method, environment, charge, result or failure, and the provenance needed to reproduce it. A failed calculation is a result of execution, not a missing energy to be replaced by zero: success=false forbids an energy and requires an error_code; success=true requires the energy and full provenance. Introduced in PACE-S 2.0; additive changes only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "calculation_id",
+    "cluster_id",
+    "campaign_id",
+    "method",
+    "solvation_model",
+    "solvation_reference",
+    "geometry_type",
+    "energy_kind",
+    "energy_eh",
+    "charge",
+    "multiplicity",
+    "success",
+    "error_code"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "calculation_id": { "type": "string", "pattern": "^PCC-[0-9]{6}$" },
+    "cluster_id": { "type": "string", "pattern": "^PSC-[0-9]{6}$" },
+    "campaign_id": { "type": "string", "minLength": 1 },
+    "method": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Hamiltonian/functional and basis as one label, e.g. 'GFN2-xTB' or 'wB97X-D3/def2-TZVPD'."
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "enum": ["xtb", "crest", "orca", "gaussian", "pyscf", "psi4", "mock"] },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "solvation_model": { "type": "string", "enum": ["none", "ALPB", "GBSA", "CPCM", "SMD", "PCM"] },
+    "solvation_reference": {
+      "type": ["string", "null"],
+      "description": "Continuum medium (e.g. 'ether', or 'epsilon=4.33'); null when solvation_model is 'none'."
+    },
+    "geometry_type": {
+      "type": "string",
+      "enum": [
+        "initial",
+        "xtb_optimized",
+        "crest_ensemble_minimum",
+        "dft_single_point_on_xtb_geometry",
+        "dft_optimized"
+      ],
+      "description": "Different geometry types are different fidelities and are never mixed in one reaction energy."
+    },
+    "energy_kind": {
+      "type": "string",
+      "enum": ["electronic_total", "free_energy_rrho", "thermal_correction", "solvation_free_energy"],
+      "description": "electronic_total includes the implicit-solvation term when solvation_model is not 'none' (as xtb and ORCA report it). Kinds are never mixed in one column or one reaction."
+    },
+    "energy_eh": { "type": ["number", "null"], "description": "Raw energy in Hartree; null unless success is true." },
+    "charge": { "type": "integer" },
+    "multiplicity": { "type": "integer", "minimum": 1 },
+    "success": { "type": "boolean" },
+    "error_code": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "NOT_EXECUTED",
+        "SCF_NOT_CONVERGED",
+        "OPT_NOT_CONVERGED",
+        "TIMEOUT",
+        "PROGRAM_ERROR",
+        "PARSE_ERROR",
+        "CONNECTIVITY_CHANGED",
+        "FRAGMENTED",
+        "UNSUPPORTED_METHOD",
+        "OTHER"
+      ]
+    },
+    "error_message": { "type": "string" },
+    "geometry_id": { "type": ["string", "null"] },
+    "input_geometry_path": { "type": "string" },
+    "final_geometry_path": { "type": "string" },
+    "connectivity_preserved": {
+      "type": ["boolean", "null"],
+      "description": "false if bonds formed or broke during optimization; such results are flagged and excluded from binding/exchange energies."
+    },
+    "input_hash": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "command": { "type": "string" },
+    "log_path": { "type": "string" },
+    "log_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "runtime_s": { "type": ["number", "null"], "minimum": 0 },
+    "n_threads": { "type": "integer", "minimum": 1 },
+    "host": { "type": "string" },
+    "commit": { "type": "string" },
+    "parameters": {
+      "type": "object",
+      "description": "Free-form numerical settings of the program (convergence, grid, opt level, etc.)."
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "success": { "const": true } }, "required": ["success"] },
+      "then": {
+        "required": ["program", "geometry_id", "input_hash", "command", "log_path", "log_sha256", "runtime_s"],
+        "properties": {
+          "energy_eh": { "type": "number" },
+          "error_code": { "type": "null" },
+          "program": { "required": ["name", "version"] },
+          "geometry_id": { "type": "string" },
+          "input_hash": { "type": "string" },
+          "runtime_s": { "type": "number" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "success": { "const": false } }, "required": ["success"] },
+      "then": {
+        "properties": {
+          "energy_eh": { "type": "null" },
+          "error_code": { "type": "string" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "solvation_model": { "const": "none" } }, "required": ["solvation_model"] },
+      "then": { "properties": { "solvation_reference": { "type": "null" } } },
+      "else": { "properties": { "solvation_reference": { "type": "string" } } }
+    }
+  ]
+}
