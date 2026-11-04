@@ -38,5 +38,5 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [3/3] Done. Results: %CD%\data\campaigns\SPV2-DEMO\reactions.csv
+echo [3/3] Done. Results: reactions.csv and convergence.csv in the --out folder (default data\campaigns\SPV2-DEMO)
 endlocal
