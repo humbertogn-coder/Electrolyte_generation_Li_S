@@ -115,8 +115,15 @@ Prompt use double quotes: `python -m pip install -e ".[chem,dev]"` plus
 - Phosphorus in `allowed_elements` (TEP, PFPN are recommended Li-SPAN seeds).
 - Verification of the PNNL/UCSD series against primary sources before it is
   encoded as an external holdout.
-- DFT benchmark level (wB97X-D3/def2-TZVPD is the starting point; check
-  syntax/availability in ORCA 6.1.1 and basis-set dependence, BSSE).
+- DFT benchmark level: wB97X-D3/def2-TZVPD with def2/J, RIJCOSX and CPCM
+  (epsilon 4.33, refrac 1.3526) runs on Grace with ORCA 6.1.1 (access granted
+  2026-11-04, HPRC ticket #89871; `workflows/slurm/orca_check.sbatch`,
+  `docs/baseline/orca_check_grace_20261104.txt`). Basis-set dependence and BSSE
+  are still to be checked.
+- Implicit solvation of the bare Li+ ion differs strongly between continuum
+  models (ALPB vs CPCM); binding energies Li+ + S -> [Li(S)]+ inherit that error,
+  exchange energies do not contain bare Li+ and should be more transferable
+  between levels. To be tested in the xTB/DFT comparison.
 
 ## Consequences
 
