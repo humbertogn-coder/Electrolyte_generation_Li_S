@@ -5,10 +5,12 @@
 # Steps (from the repo root on Grace):
 #   1. once:   bash scripts/grace/install_crest.sh
 #   2. laptop: python -m pace_s.solvation.merge_runs <run dirs> --out <merged> --crest-export <merged>/crest_inputs
-#              then copy <merged>/crest_inputs to Grace (scp/WinSCP, or commit it and git pull)
-#   3. Grace:  N=$(ls -d data/campaigns/<merged>/crest_inputs/*/ | wc -l)
-#              sbatch --array=0-$((N-1)) workflows/slurm/crest_clusters.sbatch data/campaigns/<merged>/crest_inputs
-#   4. Grace or laptop, when all tasks ended:
+#              then copy the folder to Grace (data/campaigns is not in git), from PowerShell:
+#              scp -r data\campaigns\<merged>\crest_inputs <netid>@grace.hprc.tamu.edu:/scratch/user/<netid>/
+#   3. Grace:  N=$(ls -d /scratch/user/$USER/crest_inputs/*/ | wc -l)
+#              sbatch --array=0-$((N-1)) workflows/slurm/crest_clusters.sbatch /scratch/user/$USER/crest_inputs
+#   4. copy the folder back over the laptop one (scp -r <netid>@grace...:/scratch/user/<netid>/crest_inputs
+#              data\campaigns\<merged>\) and on the laptop (xtb there gives the same level):
 #              python -m pace_s.solvation.crest_import data/campaigns/<merged>/crest_inputs --out data/campaigns/<crest run>
 #              python -m pace_s.solvation.merge_runs <run dirs> data/campaigns/<crest run> --out <merged again>
 #
