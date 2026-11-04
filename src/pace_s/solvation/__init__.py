@@ -14,7 +14,12 @@ Modules
 - `ensemble`        QC of optimized poses (connectivity, dissociation, coordination)
                     and choice of the minimum
 - `runner`          xtb on one pose -> calculation record (resumable)
+- `convergence`     sampling convergence of cluster minima, drift estimate, reaction tables
 - `run_exchange`    CLI: exchange and binding energies of a few solvents
+- `merge_runs`      CLI: merge runs (machines, seeds, CREST), judge convergence,
+                    export non-converged clusters for CREST
+- `crest_import`    CLI: re-optimize CREST conformers with xtb as a new run
 
-Planned (see docs/adr/0001-solvation-al-v2.md): crest_runner, properties.
+CREST itself runs on Grace: workflows/slurm/crest_clusters.sbatch.
+Planned (see docs/adr/0001-solvation-al-v2.md): properties.
 """

@@ -123,8 +123,19 @@ python -m pace_s.solvation.run_exchange --solvents DME DEE TTE --poses 6 --threa
 ```
 
 On Windows (Anaconda Prompt): `scripts\windows\run_exchange_demo.bat`. Outputs:
-`reactions.csv` (exchange and binding energies with QC flags), `poses.csv`,
-`clusters.jsonl`, `calculations.jsonl`.
+`reactions.csv` (exchange and binding energies with QC flags and a sampling
+drift), `convergence.csv`, `poses.csv`, `clusters.jsonl`, `calculations.jsonl`,
+`run.json`.
+
+Sampling convergence (ADR D7): merge runs from several machines or seeds, and
+send the clusters that did not converge to CREST on Grace:
+
+```
+python -m pace_s.solvation.merge_runs RUN_A RUN_B --out MERGED --crest-export MERGED/crest_inputs
+sbatch --array=0-<N-1> workflows/slurm/crest_clusters.sbatch MERGED/crest_inputs     # Grace
+python -m pace_s.solvation.crest_import MERGED/crest_inputs --out CREST_RUN
+python -m pace_s.solvation.merge_runs RUN_A RUN_B CREST_RUN --out MERGED2
+```
 
 ## Working rules
 

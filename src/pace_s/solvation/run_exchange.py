@@ -22,6 +22,17 @@ calculations.jsonl (records of the PACE-S 2.0 contracts). Working files go to
 --workdir (default <out>/work); rerunning the same command skips poses that
 already succeeded.
 
+The coordination-saturated pair is skipped for diluents (--saturated auto): a
+diluent barely solvates Li+, and four of them around Li+ end up detached or
+bound through F, which is not a solvation motif. Isolated molecules (S, FSI-)
+are cheap and every exchange energy contains them, so they get more conformers
+and poses (--isolated-conformers, --isolated-poses).
+
+Also written: convergence.csv (per cluster: best energy, half_drop_eV,
+sampling_drift_eV, converged) and run.json (solvents and settings, read by
+`merge_runs` to combine runs from several machines or seeds). See
+`pace_s.solvation.convergence` for the definitions.
+
 These are electronic energy differences of small clusters inside a reference
 continuum ("cluster-in-reference-continuum"), not free energies, CIP/AGG
 fractions or electrolyte properties.
@@ -40,19 +51,19 @@ from pathlib import Path
 from pace_s import DATA_DIR, REPO_ROOT
 from pace_s.contracts import errors as contract_errors
 from pace_s.solvation.cluster_builder import build_poses
-from pace_s.solvation.ensemble import select_minimum
-from pace_s.solvation.reactions import (
-    InconsistentEnergiesError,
-    MissingEnergyError,
-    binding_reaction,
-    exchange_reaction,
-    reaction_energy,
+from pace_s.solvation.convergence import (
+    TOL_EV,
+    assess,
+    normalize_pose_row,
+    print_reactions,
+    reaction_table,
+    write_csv,
 )
+from pace_s.solvation.reactions import binding_reaction, exchange_reaction
 from pace_s.solvation.runner import XtbSettings, run_pose
 from pace_s.solvation.species import (
     Composition,
     Species,
-    build_composition,
     cluster_record,
     make_id,
     n_ligands_to_saturate,
@@ -99,15 +110,24 @@ def git_commit() -> str | None:
         return None
 
 
-def reactions_for(solvent: Species) -> list[tuple[str, object]]:
-    n_sat = n_ligands_to_saturate(solvent)
+def reactions_for(solvent: Species, saturated: str = "auto") -> list[tuple[str, object]]:
+    """exchange_n2 and binding_n1 always; the coordination-saturated exchange for
+    solvents (saturated='auto'), for every species ('always') or never."""
     out = [("exchange_n2", exchange_reaction(solvent, 2))]
-    if n_sat != 2:
+    if saturated == "always" or (saturated == "auto" and solvent.role != "diluent"):
+        n_sat = n_ligands_to_saturate(solvent)
         out.append((f"exchange_sat_n{n_sat}", exchange_reaction(solvent, n_sat)))
-    else:
-        out.append(("exchange_sat_n2", exchange_reaction(solvent, 2)))
     out.append(("binding_n1", binding_reaction(solvent, 1)))
     return out
+
+
+def is_cluster(comp: Composition) -> bool:
+    """Li+ with at least one ligand (the poses of these are what CREST can improve)."""
+    return comp.count("li_cation") > 0 and comp.n_molecules > 1
+
+
+def workdir_name(label: str) -> str:
+    return label.replace("+", "p").replace("-", "m")
 
 
 def protocol_of(comp: Composition) -> str:
@@ -125,6 +145,13 @@ def main(argv: list[str] | None = None) -> int:
                     help="names from seeds.csv / built-in list, or NAME=SMILES")
     ap.add_argument("--poses", type=int, default=6, help="initial geometries per cluster (default 6)")
     ap.add_argument("--conformers", type=int, default=10, help="RDKit conformers per ligand")
+    ap.add_argument("--isolated-poses", type=int, default=12,
+                    help="minimum number of conformers optimized for isolated S and FSI- (default 12)")
+    ap.add_argument("--isolated-conformers", type=int, default=60,
+                    help="RDKit embeddings for isolated molecules before pruning (default 60)")
+    ap.add_argument("--saturated", choices=["auto", "always", "never"], default="auto",
+                    help="coordination-saturated exchange: solvents only (auto), all, or none")
+    ap.add_argument("--tol", type=float, default=TOL_EV, help="convergence tolerance in eV (default 0.02)")
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--alpb", default="ether", help="ALPB solvent for xtb; 'none' for gas phase")
     ap.add_argument("--seed", type=int, default=20261031)
@@ -145,7 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     commit = git_commit()
 
     # every composition needed by every reaction, computed once
-    plan: list[tuple[Species, str, object]] = [(s, name, rx) for s in solvents for name, rx in reactions_for(s)]
+    plan: list[tuple[Species, str, object]] = [(s, name, rx) for s in solvents
+                                                for name, rx in reactions_for(s, args.saturated)]
     comps: dict[str, Composition] = {}
     for _, _, rx in plan:
         for comp, _nu in rx.terms():
@@ -153,17 +181,22 @@ def main(argv: list[str] | None = None) -> int:
     log.info("%d solvents, %d reactions, %d distinct clusters/species, up to %d poses each",
              len(solvents), len(plan), len(comps), args.poses)
 
-    clusters, calcs, pose_rows, minima = [], [], [], {}
+    clusters, calcs, pose_rows, minima, conv = [], [], [], {}, {}
     n_cluster = n_calc = 0
+    run_tag = out.name
     for label, comp in sorted(comps.items(), key=lambda kv: sum(kv[1].formula.values())):
-        poses = build_poses(comp, n_poses=args.poses, seed=args.seed, n_conformers=args.conformers)
+        if comp.count("li_cation") == 0:
+            poses = build_poses(comp, n_poses=max(args.poses, args.isolated_poses), seed=args.seed,
+                                n_conformers=max(args.conformers, args.isolated_conformers))
+        else:
+            poses = build_poses(comp, n_poses=args.poses, seed=args.seed, n_conformers=args.conformers)
         log.info("%-30s %d atoms, %d poses", label, len(poses[0].structure.symbols), len(poses))
         rows = []
         for pose in poses:
             n_cluster += 1
             n_calc += 1
             cid, kid = make_id("PSC", n_cluster), make_id("PCC", n_calc)
-            res = run_pose(comp, pose, work / label.replace("+", "p").replace("-", "m") / f"pose_{pose.pose_index:02d}",
+            res = run_pose(comp, pose, work / workdir_name(label) / f"pose_{pose.pose_index:02d}",
                            settings, cid, kid, args.campaign, commit)
             calc, qc = res["calculation"], res["qc"]
             status = ("optimized" if qc.get("accepted") else
@@ -179,77 +212,37 @@ def main(argv: list[str] | None = None) -> int:
                    "accepted": qc.get("accepted", False), "connectivity_preserved": qc.get("connectivity_preserved"),
                    "dissociated": qc.get("dissociated"), "li_coordination": qc.get("li_coordination"),
                    "li_f_contacts": qc.get("li_f_contacts"),
-                   "denticity_initial": "+".join(str(b["denticity"]) for b in pose.binding),
+                   "denticity_initial": "+".join(str(b.get("denticity", "")) for b in pose.binding),
                    "runtime_s": calc.get("runtime_s")}
             rows.append(row)
             pose_rows.append(row)
             log.info("   pose %d: %s E=%s accepted=%s CN(Li)=%s %.1f s", pose.pose_index,
                      "ok" if calc["success"] else calc["error_code"], calc["energy_eh"], row["accepted"],
                      row["li_coordination"], calc.get("runtime_s") or 0)
-        summary = select_minimum(label, rows)
-        best = next((r for r in rows if r["pose_index"] == summary.best_pose), None)
-        if best is not None:
-            rec = next(c for c in calcs if c["calculation_id"] == best["calculation_id"])
-            minima[label] = rec | {"energy_range_eV": summary.energy_range_eV, "n_accepted": summary.n_accepted,
-                                   "n_poses": summary.n_poses, "n_near_best": summary.n_near_best,
-                                   "n_dissociated": summary.n_dissociated,
-                                   "li_coordination": summary.best_li_coordination}
+        c = assess(label, [normalize_pose_row(r, run_tag) for r in rows], is_cluster(comp), args.tol)
+        conv[label] = c
+        if c.best_calculation_id is not None:
+            minima[label] = next(x for x in calcs if x["calculation_id"] == c.best_calculation_id)
         else:
             log.warning("%s: no accepted pose; reactions using it will be reported as missing", label)
 
-    reaction_rows = []
-    for solvent, name, rx in plan:
-        row = {"solvent": solvent.name, "smiles": solvent.canonical_smiles, "role": solvent.role,
-               "n_donor_atoms": solvent.n_donor_atoms, "reaction": name, "equation": str(rx)}
-        try:
-            e = reaction_energy(rx, minima)
-            terms = [minima[c.label] | {"label": c.label} for c, _ in rx.terms()]
-            flags = []
-            for t in terms:
-                if t["n_poses"] > 1 and t["n_near_best"] < 2:
-                    flags.append(f"single_pose_minimum:{t['label']}")
-                if t["n_dissociated"] and t["n_dissociated"] >= t["n_poses"] / 2:
-                    flags.append(f"ligand_detaches:{t['label']}")
-            row.update({"delta_e_eV": round(e["delta_e_eV"], 4), "delta_e_kcal_mol": round(e["delta_e_kcal_mol"], 3),
-                        "method": e["method"], "solvation": f"{e['solvation_model']}({e['solvation_reference']})",
-                        "min_accepted_poses": min(t["n_accepted"] for t in terms),
-                        "min_poses_near_best": min(t["n_near_best"] for t in terms),
-                        "flags": ";".join(flags),
-                        "status": "ok" if not flags else "ok_with_flags"})
-        except MissingEnergyError as err:
-            row.update({"status": f"missing: {err}"})
-        except InconsistentEnergiesError as err:
-            row.update({"status": f"inconsistent: {err}"})
-        reaction_rows.append(row)
-
-    def write_csv(path: Path, rows: list[dict]) -> None:
-        keys = list(dict.fromkeys(k for r in rows for k in r))
-        with open(path, "w", newline="", encoding="utf-8") as fh:
-            w = csv.DictWriter(fh, fieldnames=keys)
-            w.writeheader()
-            w.writerows(rows)
+    reaction_rows = reaction_table(plan, minima, conv)
 
     write_csv(out / "reactions.csv", reaction_rows)
     write_csv(out / "poses.csv", pose_rows)
+    write_csv(out / "convergence.csv", [c.as_row() for c in conv.values()])
     for name, recs in (("clusters.jsonl", clusters), ("calculations.jsonl", calcs)):
         with open(out / name, "w", encoding="utf-8") as fh:
-            for r in recs:
-                fh.write(json.dumps(r) + "\n")
+            fh.writelines(json.dumps(r) + "\n" for r in recs)
+    manifest = {"campaign": args.campaign, "commit": commit, "seed": args.seed, "poses": args.poses,
+                "conformers": args.conformers, "isolated_poses": args.isolated_poses,
+                "isolated_conformers": args.isolated_conformers, "saturated": args.saturated,
+                "method": settings.method, "alpb": settings.alpb, "workdir": str(work),
+                "solvents": [{"name": s.name, "smiles": s.smiles, "role": s.role} for s in solvents]}
+    (out / "run.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
 
-    def fmt(v, spec):
-        return format(v, spec) if isinstance(v, (int, float)) else "-".rjust(int(spec.split(".")[0]))
-
-    print()
-    print(f"{'solvent':8s} {'reaction':16s} {'dE (eV)':>9s} {'dE (kcal/mol)':>14s}  status / flags")
-    for r in reaction_rows:
-        flags = [f.split(":")[0] for f in (r.get("flags") or "").split(";") if f]
-        note = ", ".join(f"{flags.count(k)}x {k}" for k in dict.fromkeys(flags)) or r["status"]
-        print(f"{r['solvent']:8s} {r['reaction']:16s} {fmt(r.get('delta_e_eV'), '9.3f')} "
-              f"{fmt(r.get('delta_e_kcal_mol'), '14.2f')}  {note[:90]}")
-    print("\nsingle_pose_minimum: the lowest pose of a cluster was found by only one starting geometry")
-    print("  (sampling not converged; rerun with more --poses or send the cluster to CREST on Grace).")
-    print("ligand_detaches: in most poses a ligand left Li+; the cluster is not a stable motif in this continuum.")
-    print(f"\nwrote {out / 'reactions.csv'}, poses.csv, clusters.jsonl, calculations.jsonl")
+    print_reactions(reaction_rows)
+    print(f"\nwrote {out / 'reactions.csv'}, convergence.csv, poses.csv, clusters.jsonl, calculations.jsonl, run.json")
     return 0
 
 

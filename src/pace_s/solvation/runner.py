@@ -18,10 +18,11 @@ import json
 import re
 import socket
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from pace_s.contracts import errors as contract_errors
 from pace_s.descriptors.geometry import Structure
@@ -111,6 +112,11 @@ def run_pose(
     if result_file.exists():
         old = json.loads(result_file.read_text(encoding="utf-8"))
         if old["calculation"].get("input_hash") == ihash and old["calculation"].get("success"):
+            # IDs are local to a run: a resumed pose takes the IDs of the current run
+            rec = old["calculation"]
+            rec.update({"calculation_id": calculation_id, "cluster_id": cluster_id, "campaign_id": campaign_id,
+                        "geometry_id": f"{cluster_id}-{calculation_id}"})
+            old["pose_index"] = pose.pose_index
             return old
 
     cmd = (f"xtb input.xyz --gfn {settings.gfn} --chrg {comp.net_charge}"

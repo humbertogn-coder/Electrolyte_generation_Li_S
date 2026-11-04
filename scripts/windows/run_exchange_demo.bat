@@ -25,7 +25,7 @@ if errorlevel 1 (
 )
 
 echo [1/3] Quick tests of the Tier 0.5 code
-python -m pytest -q -p no:cacheprovider tests\test_solvation_species.py tests\test_solvation_reactions.py tests\test_solvation_contracts.py tests\test_solvation_builder.py tests\test_solvation_runner.py
+python -m pytest -q -p no:cacheprovider tests\test_solvation_species.py tests\test_solvation_reactions.py tests\test_solvation_contracts.py tests\test_solvation_builder.py tests\test_solvation_runner.py tests\test_solvation_convergence.py
 if errorlevel 1 (
     echo Tests failed: send the output above before running the calculations.
     exit /b 1

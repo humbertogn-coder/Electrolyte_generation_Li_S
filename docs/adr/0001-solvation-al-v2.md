@@ -97,6 +97,42 @@ The heavy `ml` extra (torch, botorch) is not needed for the MVP. On Anaconda
 Prompt use double quotes: `python -m pip install -e ".[chem,dev]"` plus
 `scikit-learn` when the surrogate step starts.
 
+### D7 — Sampling convergence, merged runs and CREST as a pose generator (2026-11-04)
+
+The 6-pose demo gave exchange energies that differed by up to 0.9 eV between a
+laptop and the cloud (same code and seed, different RDKit builds); with 24 poses
+the difference fell to 0.04-0.14 eV, of the same size as the DEE-DME gap. So:
+
+- `convergence.assess` judges every cluster: half_drop_eV (how much the minimum
+  fell in the second half of the poses), run_spread_eV (spread of the per-run
+  minima when runs from several machines or seeds are merged) and
+  sampling_drift_eV = max of both. Converged: drift <= 0.02 eV and, for Li+
+  clusters, two accepted poses within 0.05 eV of the minimum. The drift is a
+  lower bound of the sampling error, reported with every reaction energy
+  (summed over terms with |nu|).
+- `merge_runs` merges run directories (refusing mixed levels of theory) and
+  exports the best geometry of every non-converged cluster for CREST.
+- CREST 3.0.2 (static binary, `scripts/grace/install_crest.sh`) runs on Grace in
+  NCI mode with the same GFN2/ALPB(ether) (`workflows/slurm/crest_clusters.sbatch`).
+  `crest_import` re-optimizes the lowest CREST conformers with the same xtb
+  settings and QC, so CREST is a pose generator and every energy stays at one
+  level. A cluster searched by CREST counts as converged; the gain over the
+  pose sampling is reported (crest_gain_eV). Cloud check on Li+/FSI-/DME
+  (`--quick`, 5.5 min on 2 cores): CREST found the same minimum as the 24 poses
+  (gain 0.0003 eV).
+- Isolated molecules enter every exchange energy, so they get 60 RDKit
+  embeddings and at least 12 optimized conformers (cheap). With the old
+  10 embeddings one machine never found the lowest FSI- conformer (0.053 eV).
+
+### D8 — No coordination-saturated clusters for diluents (2026-11-04)
+
+D1 is kept for solvents. For diluents (role `diluent`), [Li(S)4]+ and
+[Li(FSI)(S)3] were unphysical in the demo: Li(TTE)4+ ended with no O within
+2.6 A (held by F) and TTE detached in many poses; they also took two thirds of
+the run time. A diluent is defined by barely solvating Li+, so only exchange_n2
+and binding_n1 are computed for it (`run_exchange --saturated auto`; `always`
+restores the old behaviour).
+
 ## Physical rules enforced in code
 
 - Every reaction checks conservation of elements and total charge on creation
