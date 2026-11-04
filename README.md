@@ -115,7 +115,16 @@ stoichiometry, donor atoms, cluster protocols), `pace_s.solvation.reactions`
 (balanced reactions, reaction energies that refuse missing or mixed-level
 terms), `pace_s.provenance` (stable input hashes), and the versioned contracts
 `cluster_record`, `calculation_record`, `selection_record` (v1 contracts are
-unchanged and pinned by hash in the tests).
+unchanged and pinned by hash in the tests); `cluster_builder`, `ensemble`,
+`runner` and the first demonstration:
+
+```
+python -m pace_s.solvation.run_exchange --solvents DME DEE TTE --poses 6 --threads 4 --out data/campaigns/SPV2-DEMO
+```
+
+On Windows (Anaconda Prompt): `scripts\windows\run_exchange_demo.bat`. Outputs:
+`reactions.csv` (exchange and binding energies with QC flags), `poses.csv`,
+`clusters.jsonl`, `calculations.jsonl`.
 
 ## Working rules
 

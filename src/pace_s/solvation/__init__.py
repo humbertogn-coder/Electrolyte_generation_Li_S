@@ -8,9 +8,13 @@ continuum. They are NOT electrolyte properties: they do not give CIP/AGG
 populations, desolvation barriers, conductivity or cell lifetime.
 
 Modules
-- `species`   species, charges, multiplicity, stoichiometry, cluster protocols
-- `reactions` balanced reactions and reaction energies with consistency checks
+- `species`         species, charges, multiplicity, stoichiometry, cluster protocols
+- `reactions`       balanced reactions and reaction energies with consistency checks
+- `cluster_builder` initial 3D poses (binding modes, conformers, seeded and reproducible)
+- `ensemble`        QC of optimized poses (connectivity, dissociation, coordination)
+                    and choice of the minimum
+- `runner`          xtb on one pose -> calculation record (resumable)
+- `run_exchange`    CLI: exchange and binding energies of a few solvents
 
-Planned (see docs/adr/0001-solvation-al-v2.md): cluster_builder, crest_runner,
-ensemble, properties, runner.
+Planned (see docs/adr/0001-solvation-al-v2.md): crest_runner, properties.
 """
