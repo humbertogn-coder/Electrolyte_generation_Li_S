@@ -26,8 +26,8 @@
 #SBATCH --job-name=paces_cosmors
 #SBATCH --time=4-00:00:00
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --ntasks=8                # ORCA parallelizes with MPI processes: one task per core
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=32G
 #SBATCH --output=/scratch/user/%u/logs/paces_cosmors_%j.out
 #SBATCH --error=/scratch/user/%u/logs/paces_cosmors_%j.err
@@ -37,7 +37,7 @@ set -euo pipefail
 STRUCTURES=${1:?structures.inp written by `python -m pace_s.oracles.cosmors prepare`}
 START=${START:-0}
 STOP=${STOP:-}
-NCORES=${NCORES:-${SLURM_CPUS_PER_TASK:-1}}   # set NCORES=1 if ORCA's MPI does not start
+NCORES=${NCORES:-${SLURM_NTASKS:-1}}   # %pal nprocs = SLURM tasks (verified on Grace 2026-11-04 with orca_check.sbatch)
 
 REPO=$(pwd)
 SET=$(basename "$(dirname "$STRUCTURES")")

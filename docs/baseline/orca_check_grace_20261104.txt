@@ -1,0 +1,18 @@
+ORCA access check on Grace (HPRC), 2026-11-04, run by C. Guerrero
+modules: GCC/13.2.0 OpenMPI/4.1.8 ORCA/6.1.1-avx2
+binary:  /sw/hprc/sw/ORCA/ORCA-6.1.1-OpenMPI-4.1.8/orca   (Program Version 6.1.1 - RELEASE)
+note:    ORCA 6.1.1 has no --version flag; it prints the banner (with "Program Version")
+         and then fails to open an input file named "--version".
+
+1) HF/def2-SVP water, serial on the login node
+   FINAL SINGLE POINT ENERGY  -75.960975158486   ORCA TERMINATED NORMALLY
+
+2) workflows/slurm/orca_check.sbatch (wB97X-D3/def2-TZVPD def2/J RIJCOSX CPCM eps=4.33, 4 MPI tasks)
+   ORCA: /sw/hprc/sw/ORCA/ORCA-6.1.1-OpenMPI-4.1.8/orca
+   dme:   terminated_normally=1  time=92 s  E=-308.899728493691
+   li:    terminated_normally=1  time=17 s  E=-7.382896892220
+   lidme: terminated_normally=1  time=76 s  E=-316.339798844012
+   E_bind(Li+ - DME) = -1.556 eV  (unoptimized test geometry; not a result)
+   For orientation only: Tier-0 GFN2-xTB/ALPB(ether) on an xtb-optimized complex gave -2.67 eV
+   (data/reference/tier0_reference_results_gfn2.csv). Different geometries and continuum models;
+   not a comparison of methods.

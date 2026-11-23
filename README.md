@@ -115,7 +115,27 @@ stoichiometry, donor atoms, cluster protocols), `pace_s.solvation.reactions`
 (balanced reactions, reaction energies that refuse missing or mixed-level
 terms), `pace_s.provenance` (stable input hashes), and the versioned contracts
 `cluster_record`, `calculation_record`, `selection_record` (v1 contracts are
-unchanged and pinned by hash in the tests).
+unchanged and pinned by hash in the tests); `cluster_builder`, `ensemble`,
+`runner` and the first demonstration:
+
+```
+python -m pace_s.solvation.run_exchange --solvents DME DEE TTE --poses 6 --threads 4 --out data/campaigns/SPV2-DEMO
+```
+
+On Windows (Anaconda Prompt): `scripts\windows\run_exchange_demo.bat`. Outputs:
+`reactions.csv` (exchange and binding energies with QC flags and a sampling
+drift), `convergence.csv`, `poses.csv`, `clusters.jsonl`, `calculations.jsonl`,
+`run.json`.
+
+Sampling convergence (ADR D7): merge runs from several machines or seeds, and
+send the clusters that did not converge to CREST on Grace:
+
+```
+python -m pace_s.solvation.merge_runs RUN_A RUN_B --out MERGED --crest-export MERGED/crest_inputs
+sbatch --array=0-<N-1> workflows/slurm/crest_clusters.sbatch MERGED/crest_inputs     # Grace
+python -m pace_s.solvation.crest_import MERGED/crest_inputs --out CREST_RUN
+python -m pace_s.solvation.merge_runs RUN_A RUN_B CREST_RUN --out MERGED2
+```
 
 ## Working rules
 
