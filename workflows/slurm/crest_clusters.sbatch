@@ -8,6 +8,7 @@
 #              then copy the folder to Grace (data/campaigns is not in git), from PowerShell:
 #              scp -r data\campaigns\<merged>\crest_inputs <netid>@grace.hprc.tamu.edu:/scratch/user/<netid>/
 #   3. Grace:  mkdir -p /scratch/user/$USER/logs     # Slurm cannot start the job if this folder is missing
+#              chmod -R u+w /scratch/user/$USER/crest_inputs   # scp from Windows may copy it read-only
 #              N=$(ls -d /scratch/user/$USER/crest_inputs/*/ | wc -l)
 #              sbatch --array=0-$((N-1)) workflows/slurm/crest_clusters.sbatch /scratch/user/$USER/crest_inputs
 #   4. copy the folder back over the laptop one (scp -r <netid>@grace...:/scratch/user/<netid>/crest_inputs
@@ -46,6 +47,11 @@ TASK=${SLURM_ARRAY_TASK_ID:-0}
 D=${DIRS[$TASK]}
 cd "$D"
 if [ -s crest_best.xyz ]; then echo "$D: already done"; exit 0; fi
+# scp from Windows can deliver read-only folders; CREST must write here
+if [ ! -w . ]; then
+    echo "$D is not writable. Run once on Grace:  chmod -R u+w $INPUTS   and resubmit."
+    exit 1
+fi
 # leave a trace in the cluster folder itself, so a failed task is visible after copying it back
 STATUS=crest.status
 echo "started $(date) job ${SLURM_ARRAY_JOB_ID:-?}_${TASK} on $(hostname) crest=$CREST" > "$STATUS"
