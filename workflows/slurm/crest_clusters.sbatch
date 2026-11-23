@@ -7,7 +7,8 @@
 #   2. laptop: python -m pace_s.solvation.merge_runs <run dirs> --out <merged> --crest-export <merged>/crest_inputs
 #              then copy the folder to Grace (data/campaigns is not in git), from PowerShell:
 #              scp -r data\campaigns\<merged>\crest_inputs <netid>@grace.hprc.tamu.edu:/scratch/user/<netid>/
-#   3. Grace:  N=$(ls -d /scratch/user/$USER/crest_inputs/*/ | wc -l)
+#   3. Grace:  mkdir -p /scratch/user/$USER/logs     # Slurm cannot start the job if this folder is missing
+#              N=$(ls -d /scratch/user/$USER/crest_inputs/*/ | wc -l)
 #              sbatch --array=0-$((N-1)) workflows/slurm/crest_clusters.sbatch /scratch/user/$USER/crest_inputs
 #   4. copy the folder back over the laptop one (scp -r <netid>@grace...:/scratch/user/<netid>/crest_inputs
 #              data\campaigns\<merged>\) and on the laptop (xtb there gives the same level):
@@ -45,16 +46,24 @@ TASK=${SLURM_ARRAY_TASK_ID:-0}
 D=${DIRS[$TASK]}
 cd "$D"
 if [ -s crest_best.xyz ]; then echo "$D: already done"; exit 0; fi
+# leave a trace in the cluster folder itself, so a failed task is visible after copying it back
+STATUS=crest.status
+echo "started $(date) job ${SLURM_ARRAY_JOB_ID:-?}_${TASK} on $(hostname) crest=$CREST" > "$STATUS"
+trap 'echo "FAILED (exit $?) $(date); see /scratch/user/$USER/logs/paces_crest_${SLURM_ARRAY_JOB_ID:-?}_${TASK}.out" >> "$STATUS"' ERR
 CHRG=$(cat .CHRG)
 UHF=$(cat .UHF)
-ALPB=$(python3 -c "import json;print(json.load(open('meta.json')).get('alpb') or '')")
+# no python needed: read "alpb": "ether" (or null) from meta.json
+ALPB=$(grep -o '"alpb": *"[^"]*"' meta.json | sed 's/.*"\([^"]*\)"$/\1/' || true)
 SOLV=""
 [ -n "$ALPB" ] && SOLV="--alpb $ALPB"
 echo "$(date) $D chrg=$CHRG uhf=$UHF $SOLV $MODE threads=$OMP_NUM_THREADS"
 "$CREST" input.xyz --gfn2 $SOLV --chrg "$CHRG" --uhf "$UHF" --nci $MODE -T "$OMP_NUM_THREADS" > crest.out 2>&1
-grep -q "CREST terminated normally" crest.out || { echo "$D: CREST did not terminate normally"; tail -20 crest.out; exit 1; }
+grep -q "CREST terminated normally" crest.out || { echo "$D: CREST did not terminate normally"; tail -20 crest.out;
+    echo "FAILED: CREST did not terminate normally $(date)" >> "$STATUS"; exit 1; }
 # keep only what crest_import and a reader need
 find . -maxdepth 1 -type f ! -name 'input.xyz' ! -name 'meta.json' ! -name '.CHRG' ! -name '.UHF' \
-     ! -name 'crest.out' ! -name 'crest_best.xyz' ! -name 'crest_conformers.xyz' ! -name 'crest.energies' -delete
+     ! -name 'crest.out' ! -name 'crest_best.xyz' ! -name 'crest_conformers.xyz' ! -name 'crest.energies' \
+     ! -name 'crest.status' -delete
 find . -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+echo "done $(date)" >> "$STATUS"
 echo "$(date) $D done: $(head -2 crest_best.xyz | tail -1)"
