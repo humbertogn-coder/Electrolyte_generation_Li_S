@@ -15,7 +15,7 @@ minima and the sampling drift (see `pace_s.solvation.convergence`). Written to
 --out: convergence.csv, reactions.csv (with sampling_drift_eV) and merge.json.
 
 --crest-export DIR writes, for every Li+ cluster that is not converged (or for
-all of them with --crest-all), DIR/<cluster>/input.xyz (best geometry found so
+all of them with --crest-all) and every isolated molecule that is not converged, DIR/<cluster>/input.xyz (best geometry found so
 far), .CHRG, .UHF and meta.json. Copy DIR to Grace and run
 workflows/slurm/crest_clusters.sbatch on it; bring the results back with
 `python -m pace_s.solvation.crest_import`.
@@ -150,12 +150,15 @@ def merge(run_dirs: list[Path], saturated: str = "auto", tol: float = TOL_EV) ->
 
 
 def crest_export(merged: dict[str, Any], dest: Path, include_converged: bool = False) -> list[str]:
-    """Best geometry of every non-converged Li+ cluster, ready for CREST."""
+    """Best geometry of every non-converged Li+ cluster (all of them with
+    include_converged) and of every non-converged isolated molecule, ready for CREST."""
     dest = Path(dest)
     out = []
     for label, c in merged["conv"].items():
         comp = merged["comps"][label]
-        if not is_cluster(comp) or c.best_calculation_id is None or (c.converged and not include_converged):
+        if c.best_calculation_id is None or (comp.count("li_cation") and not is_cluster(comp)):
+            continue   # nothing to search for, or a bare Li+
+        if c.converged and (not include_converged or not is_cluster(comp)):
             continue
         best_row = next(r for r in merged["rows"][label]
                         if r["run"] == c.best_run and r["calculation_id"] == c.best_calculation_id)
@@ -202,7 +205,8 @@ def main(argv: list[str] | None = None) -> int:
                                                 "tol_eV": args.tol, "saturated": args.saturated}, indent=1),
                                     encoding="utf-8")
     print(f"\n{'cluster':32s} {'poses':>5s} {'acc':>4s} {'near':>4s} {'drift':>7s} {'spread':>7s}  converged / why")
-    print("  (drift: how much the minimum moved with more poses, between runs, or thanks to CREST; eV)")
+    print("  (drift: how much the minimum moved with more poses or between runs; spread: between runs,")
+    print("   including the CREST run; after CREST the drift is 0 and the gain goes to the CREST column below)")
     for label, c in sorted(m["conv"].items(), key=lambda kv: kv[0]):
         sp = f"{c.run_spread_eV:7.3f}" if c.run_spread_eV is not None else "      -"
         dr = f"{c.sampling_drift_eV:7.3f}" if c.sampling_drift_eV is not None else "      -"

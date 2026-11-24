@@ -20,9 +20,9 @@
 # crest.out there (scratch files are deleted at the end). A folder that already has
 # crest_best.xyz is skipped, so resubmitting the same command only redoes the failed ones.
 #
-# MODE: "" (default, full iMTD-GC search) or "--quick". Measured in the cloud (2 cores,
-# --quick): Li+/FSI-/DME, 24 atoms, 5.5 min. Full mode is ~3-5x longer; 45-atom clusters
-# (two DEE or TTE) take one to a few hours on 8 cores.
+# MODE: "" (default, full iMTD-GC search) or "--quick". Measured on Grace (8 cores, full
+# mode, 2026-11-23): Li+/FSI-/DME 26 atoms 5 min, Li+/FSI-/TTE 28 atoms 13 min,
+# Li(TTE)2+ 37 atoms 14 min, Li(DEE)2+ 45 atoms 22 min (about 0.7-3 SU each).
 #
 #SBATCH --job-name=paces_crest
 #SBATCH --time=12:00:00
@@ -62,8 +62,11 @@ UHF=$(cat .UHF)
 ALPB=$(grep -o '"alpb": *"[^"]*"' meta.json | sed 's/.*"\([^"]*\)"$/\1/' || true)
 SOLV=""
 [ -n "$ALPB" ] && SOLV="--alpb $ALPB"
-echo "$(date) $D chrg=$CHRG uhf=$UHF $SOLV $MODE threads=$OMP_NUM_THREADS"
-"$CREST" input.xyz --gfn2 $SOLV --chrg "$CHRG" --uhf "$UHF" --nci $MODE -T "$OMP_NUM_THREADS" > crest.out 2>&1
+echo "$(date) $D chrg=$CHRG uhf=$UHF $SOLV $MODE threads=$OMP_NUM_THREADS"  # --nci added below for Li+ clusters
+# NCI mode (wall potential that keeps the complex together) only for Li+ clusters
+NCI=""
+grep -qiE '^[[:space:]]*li[[:space:]]' input.xyz && NCI="--nci"
+"$CREST" input.xyz --gfn2 $SOLV --chrg "$CHRG" --uhf "$UHF" $NCI $MODE -T "$OMP_NUM_THREADS" > crest.out 2>&1
 grep -q "CREST terminated normally" crest.out || { echo "$D: CREST did not terminate normally"; tail -20 crest.out;
     echo "FAILED: CREST did not terminate normally $(date)" >> "$STATUS"; exit 1; }
 # keep only what crest_import and a reader need

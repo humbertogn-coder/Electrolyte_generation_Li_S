@@ -118,3 +118,23 @@ def test_merge_refuses_mixed_levels(tmp_path, monkeypatch):
     with pytest.raises(SystemExit):
         merge_runs.main([str(tmp_path / "ether"), str(tmp_path / "gas"), "--out", str(tmp_path / "m")])
     shutil.rmtree(tmp_path / "m", ignore_errors=True)
+
+
+def test_after_crest_the_gain_is_reported_not_counted_as_drift():
+    r = rows([0.1, 0.3, 0.2], "poses") + rows([0.0, 0.08], "crest")
+    c = assess("X", r, is_cluster=True, crest_runs={"crest"})
+    assert c.sampling_drift_eV == 0.0 and c.crest_gain_eV == pytest.approx(0.1, abs=1e-6)
+    assert c.n_near_best == 1 and c.converged   # one CREST conformer at the minimum is enough
+
+
+def test_non_converged_isolated_molecules_are_exported_but_not_bare_li(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner_mod, "run_xtb", fake_xtb)
+    assert run_exchange.main(["--solvents", "DME", "--poses", "2", "--isolated-poses", "2",
+                              "--isolated-conformers", "10", "--out", str(tmp_path / "run")]) == 0
+    m = merge_runs.merge([tmp_path / "run"])
+    m["conv"]["DME(1)"].converged = False
+    m["conv"]["Li+(1)"].converged = False
+    done = merge_runs.crest_export(m, tmp_path / "crest")
+    assert "DME(1)" in done and "Li+(1)" not in done
+    meta = json.loads((tmp_path / "crest" / "DME(1)" / "meta.json").read_text())
+    assert meta["net_charge"] == 0 and meta["parts"][0]["name"] == "DME"

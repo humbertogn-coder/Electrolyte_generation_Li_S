@@ -120,6 +120,16 @@ the difference fell to 0.04-0.14 eV, of the same size as the DEE-DME gap. So:
   pose sampling is reported (crest_gain_eV). Cloud check on Li+/FSI-/DME
   (`--quick`, 5.5 min on 2 cores): CREST found the same minimum as the 24 poses
   (gain 0.0003 eV).
+- First CREST round on Grace (2026-11-23, full mode, 8 cores; 5-22 min per
+  cluster, ~0.7-3 SU): CREST lowered Li+/FSI-/TTE by 0.178 eV and Li(DEE)2+ by
+  0.086 eV below the best of 48 poses from two machines, and confirmed
+  Li+/FSI-/DME and Li(TTE)2+. Pose sampling alone, even pooled, can miss a
+  valley by ~0.1-0.2 eV in flexible or diluent-containing clusters; at this cost
+  CREST is affordable for every Li+ cluster of a production campaign. After
+  CREST the gain is reported (crest_gain_eV) and not counted as drift.
+  Exchange energies (n = 2, GFN2-xTB/ALPB ether): DME -2.679, DEE -2.673,
+  TTE -3.908 eV. TTE is clearly separated; DME and DEE are not distinguishable
+  at this level.
 - Isolated molecules enter every exchange energy, so they get 60 RDKit
   embeddings and at least 12 optimized conformers (cheap). With the old
   10 embeddings one machine never found the lowest FSI- conformer (0.053 eV).

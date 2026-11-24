@@ -21,9 +21,13 @@ Li+ cluster with ligands, at least two accepted poses reached the minimum
 
 Clusters searched with CREST (poses from a run made by `crest_import`) are the
 exception: CREST's metadynamics is the most thorough search available at this
-level, so the cluster counts as converged once one CREST pose is accepted, and
-the drift is how much CREST lowered the minimum of the pose sampling
-(crest_gain_eV). A large gain means the earlier pose sampling was poor.
+level, so the cluster counts as converged once one CREST pose is accepted. How
+much CREST lowered the minimum of the pose sampling is reported as
+crest_gain_eV (a large gain means the pose sampling had missed a valley); it is
+not added to the drift, because it is a correction already applied, not a
+remaining uncertainty. The remaining error after CREST is not observable here
+and is taken as zero. A CREST ensemble holds distinct conformers by design, so
+"single_pose_minimum" does not apply to it.
 
 For a reaction, the drift of each term is added with |stoichiometric
 coefficient| (conservative: the errors are not assumed to cancel).
@@ -180,7 +184,7 @@ def _assess_with_crest(label, rows, crest_rows, is_cluster, tol) -> ClusterConve
     gain = max(0.0, (e_base - e_crest) * EH_TO_EV) if e_base is not None else 0.0
     full.crest_gain_eV = gain
     full.half_drop_eV = None
-    full.sampling_drift_eV = gain
+    full.sampling_drift_eV = 0.0
     full.converged, full.reasons = True, []
     return full
 
@@ -198,15 +202,17 @@ def reaction_table(plan: Iterable[tuple[Any, str, Reaction]], minima: dict[str, 
             terms = [(c.label, nu, conv[c.label]) for c, nu in rx.terms()]
             flags = []
             for lab, _nu, c in terms:
-                if c.is_cluster and c.n_poses > 1 and c.n_near_best < 2:
+                if c.is_cluster and not c.crest_checked and c.n_poses > 1 and c.n_near_best < 2:
                     flags.append(f"single_pose_minimum:{lab}")
                 if c.is_cluster and c.n_dissociated and c.n_dissociated >= c.n_poses / 2:
                     flags.append(f"ligand_detaches:{lab}")
                 if any(x != "single_pose_minimum" for x in c.reasons):
                     flags.append(f"not_converged:{lab}")
             drift = sum(abs(nu) * (c.sampling_drift_eV or 0.0) for _lab, nu, c in terms)
+            gain = sum(abs(nu) * (c.crest_gain_eV or 0.0) for _lab, nu, c in terms)
             row.update({"delta_e_eV": round(e["delta_e_eV"], 4),
                         "sampling_drift_eV": round(drift, 4),
+                        "crest_gain_eV": round(gain, 4),
                         "delta_e_kcal_mol": round(e["delta_e_kcal_mol"], 3),
                         "method": e["method"], "solvation": f"{e['solvation_model']}({e['solvation_reference']})",
                         "min_accepted_poses": min(c.n_accepted for _l, _n, c in terms),
@@ -235,13 +241,16 @@ def print_reactions(rows: list[dict]) -> None:
         return format(v, spec) if isinstance(v, (int, float)) else "-".rjust(int(spec.split(".")[0]))
 
     print()
-    print(f"{'solvent':8s} {'reaction':16s} {'dE (eV)':>9s} {'drift':>7s} {'dE (kcal/mol)':>14s}  status / flags")
+    print(f"{'solvent':8s} {'reaction':16s} {'dE (eV)':>9s} {'drift':>7s} {'CREST':>7s} {'dE (kcal/mol)':>14s}  "
+          "status / flags")
     for r in rows:
         flags = [f.split(":")[0] for f in (r.get("flags") or "").split(";") if f]
         note = ", ".join(f"{flags.count(k)}x {k}" for k in dict.fromkeys(flags)) or r["status"]
         print(f"{r['solvent']:8s} {r['reaction']:16s} {fmt(r.get('delta_e_eV'), '9.3f')} "
-              f"{fmt(r.get('sampling_drift_eV'), '7.3f')} {fmt(r.get('delta_e_kcal_mol'), '14.2f')}  {note[:90]}")
+              f"{fmt(r.get('sampling_drift_eV'), '7.3f')} {fmt(r.get('crest_gain_eV'), '7.3f')} "
+              f"{fmt(r.get('delta_e_kcal_mol'), '14.2f')}  {note[:90]}")
     print("\ndrift: how much the minima of the terms moved with more poses or between runs (eV, summed);")
     print("  a lower bound of the sampling error. Differences between solvents smaller than it are noise.")
+    print("CREST: how much CREST lowered the minima of the terms (eV, summed); already applied to dE.")
     print("single_pose_minimum / not_converged: send the cluster to CREST (merge_runs --crest-export).")
     print("ligand_detaches: in most poses a ligand left Li+; the cluster is not a stable motif in this continuum.")
