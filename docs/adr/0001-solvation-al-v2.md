@@ -143,6 +143,20 @@ the run time. A diluent is defined by barely solvating Li+, so only exchange_n2
 and binding_n1 are computed for it (`run_exchange --saturated auto`; `always`
 restores the old behaviour).
 
+### D9 — DFT single points on the xtb minima (2026-11-24)
+
+With CREST-checked minima, GFN2-xTB/ALPB(ether) separates TTE from the glymes but
+gives DME and DEE the same exchange energy (-2.679 vs -2.673 eV), while the
+PNNL series finds DEE more anion-rich. Before changing the descriptor, the level
+of theory is tested: `dft_sp` writes one ORCA input per minimum
+(wB97X-D3/def2-TZVPD, def2/J RIJCOSX, TightSCF, CPCM epsilon 4.33 / n 1.3526,
+the level of D5 and orca_check), `orca_sp_array.sbatch` runs them on Grace and
+`dft_sp import` writes records labelled dft_single_point_on_xtb_geometry and the
+DFT reaction energies next to the xtb ones. Geometries stay xtb (no DFT
+re-optimization) and energies stay electronic, so the comparison isolates the
+Hamiltonian and continuum. If DME and DEE still coincide at DFT, the limitation
+is in the descriptor (cluster size, missing free-energy terms), not in xtb.
+
 ## Physical rules enforced in code
 
 - Every reaction checks conservation of elements and total charge on creation

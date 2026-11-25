@@ -19,7 +19,9 @@ Modules
 - `merge_runs`      CLI: merge runs (machines, seeds, CREST), judge convergence,
                     export non-converged clusters for CREST
 - `crest_import`    CLI: re-optimize CREST conformers with xtb as a new run
+- `dft_sp`          CLI: ORCA single points (wB97X-D3/def2-TZVPD, CPCM ether) on the
+                    xtb minima; DFT reaction energies next to the xtb ones
 
-CREST itself runs on Grace: workflows/slurm/crest_clusters.sbatch.
+CREST and ORCA run on Grace: workflows/slurm/crest_clusters.sbatch, orca_sp_array.sbatch.
 Planned (see docs/adr/0001-solvation-al-v2.md): properties.
 """

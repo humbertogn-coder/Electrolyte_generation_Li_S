@@ -137,6 +137,10 @@ python -m pace_s.solvation.crest_import MERGED/crest_inputs --out CREST_RUN
 python -m pace_s.solvation.merge_runs RUN_A RUN_B CREST_RUN --out MERGED2
 ```
 
+DFT check of the same minima (ADR D9): `python -m pace_s.solvation.dft_sp export
+RUN_A RUN_B CREST_RUN --out MERGED2/dft`, then `workflows/slurm/orca_sp_array.sbatch`
+on Grace and `python -m pace_s.solvation.dft_sp import MERGED2/dft`.
+
 ## Working rules
 
 1. **Versioned manifests.** One CSV per campaign in `data/manifests/` with id, SMILES, config hash, Grace path and checksum. Git keeps the index, Grace keeps the bytes.
